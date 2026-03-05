@@ -15,6 +15,8 @@ const PrivateRoute = ({ children }) => {
   return token ? children : <Navigate to="/login" />;
 };
 
+import Settings from './pages/Settings';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -25,6 +27,20 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <KanbanBoard />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/clients" element={
+            <PrivateRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/settings" element={
+            <PrivateRoute>
+              <Layout>
+                <Settings />
               </Layout>
             </PrivateRoute>
           } />

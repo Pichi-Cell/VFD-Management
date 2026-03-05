@@ -59,3 +59,12 @@ exports.login = async (req, res) => {
         res.status(500).json({ msg: 'Server error during login', error: err.message });
     }
 };
+exports.getUsers = async (req, res) => {
+    try {
+        const result = await db.query('SELECT id, username, role, created_at FROM vfd.users ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Get Users Error:', err.message);
+        res.status(500).json({ msg: 'Server error while fetching users', error: err.message });
+    }
+};

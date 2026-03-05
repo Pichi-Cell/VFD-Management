@@ -1,10 +1,19 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Database, Users, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { LogOut, LayoutDashboard, Database, Users, Settings, Plus } from 'lucide-react';
+import NewRepairModal from './NewRepairModal';
 
 const Layout = ({ children }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [isNewRepairModalOpen, setIsNewRepairModalOpen] = useState(false);
+
+    React.useEffect(() => {
+        const handleOpen = () => setIsNewRepairModalOpen(true);
+        window.addEventListener('open-new-repair', handleOpen);
+        return () => window.removeEventListener('open-new-repair', handleOpen);
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -12,25 +21,48 @@ const Layout = ({ children }) => {
         navigate('/login');
     };
 
+    // Determine title based on location
+    const getPageTitle = () => {
+        if (location.pathname === '/') return 'Repair Dashboard';
+        if (location.pathname === '/settings' || location.pathname === '/clients') return 'Settings & Management';
+        if (location.pathname.includes('/repair/')) {
+            if (location.pathname.endsWith('/report')) return 'Technical Report';
+            return 'Repair Detail';
+        }
+        return 'VFD Manager';
+    };
+
     return (
-        <div className="min-h-screen flex bg-bg">
+        <div className="h-screen flex bg-bg overflow-hidden">
             {/* Sidebar */}
-            <aside className="w-64 bg-primary text-white flex flex-col fixed inset-y-0">
+            <aside className="z-50 w-64 bg-primary text-white flex flex-col fixed inset-y-0 shadow-2xl">
                 <div className="p-6 text-xl font-bold border-b border-primary-light flex items-center gap-2">
                     <Database className="text-accent" />
                     <span>VFD Manager</span>
                 </div>
 
                 <nav className="flex-1 p-4 flex flex-col gap-2">
-                    <button className="flex items-center gap-3 p-3 rounded-lg bg-accent text-white w-full text-left transition-colors">
+                    <button
+                        onClick={() => navigate('/')}
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${location.pathname === '/' ? 'bg-accent text-white' : 'hover:bg-primary-light text-slate-400 hover:text-white'
+                            }`}
+                    >
                         <LayoutDashboard size={20} />
                         <span>Workflow</span>
                     </button>
-                    <button className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary-light text-slate-400 hover:text-white w-full text-left transition-colors">
+                    <button
+                        onClick={() => navigate('/settings')}
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${location.pathname === '/settings' || location.pathname === '/clients' ? 'bg-accent text-white' : 'hover:bg-primary-light text-slate-400 hover:text-white'
+                            }`}
+                    >
                         <Users size={20} />
                         <span>Clients</span>
                     </button>
-                    <button className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary-light text-slate-400 hover:text-white w-full text-left transition-colors">
+                    <button
+                        onClick={() => navigate('/settings')}
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${location.pathname === '/settings' ? 'bg-accent/50 text-white' : 'hover:bg-primary-light text-slate-400 hover:text-white'
+                            }`}
+                    >
                         <Settings size={20} />
                         <span>Settings</span>
                     </button>
@@ -57,20 +89,36 @@ const Layout = ({ children }) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 ml-64 min-h-screen flex flex-col">
-                <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center px-8 justify-between sticky top-0 z-20">
-                    <h1 className="text-lg font-bold text-slate-800">Repair Dashboard</h1>
+            <main className="flex-1 ml-64 h-screen flex flex-col overflow-hidden relative">
+                <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200 flex items-center px-10 justify-between flex-shrink-0 z-40">
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 tracking-tight">{getPageTitle()}</h1>
+                        <p className="text-[10px] font-black text-slate-400 border-t border-slate-100 flex items-center gap-1">
+                            DMD COMPRESORES <span className="text-accent">•</span> V1.0.4
+                        </p>
+                    </div>
                     <div className="flex items-center gap-4">
-                        <button className="px-5 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl transition-all shadow-md active:scale-95 font-semibold text-sm">
-                            + New Repair
+                        <button
+                            onClick={() => setIsNewRepairModalOpen(true)}
+                            className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl transition-all shadow-xl shadow-slate-200 active:scale-95 font-black text-xs uppercase tracking-widest flex items-center gap-2"
+                        >
+                            <Plus size={18} />
+                            New Repair
                         </button>
                     </div>
                 </header>
 
-                <div className="p-8 flex-1">
-                    {children}
+                <div className="flex-1 overflow-auto">
+                    <div className="p-8 min-h-full">
+                        {children}
+                    </div>
                 </div>
             </main>
+
+            <NewRepairModal
+                isOpen={isNewRepairModalOpen}
+                onClose={() => setIsNewRepairModalOpen(false)}
+            />
         </div>
     );
 };

@@ -3,11 +3,12 @@ const db = require('../db');
 exports.getRepairs = async (req, res) => {
     try {
         const result = await db.query(`
-      SELECT r.*, v.serial_number, v.internal_number, c.name as client_name, m.brand, m.model
+      SELECT r.*, v.serial_number, v.internal_number, c.name as client_name, m.brand, m.model, u.username as technician_name
       FROM vfd.repairs r
       JOIN vfd.vfds v ON r.vfd_id = v.id
       JOIN vfd.clients c ON v.client_id = c.id
       JOIN vfd.vfd_models m ON v.model_id = m.id
+      LEFT JOIN vfd.users u ON r.technician_id = u.id
       ORDER BY r.updated_at DESC
     `);
         res.json(result.rows);
@@ -98,18 +99,34 @@ exports.updateRepairData = async (req, res) => {
         return res.status(400).json({ msg: 'Repair ID is required' });
     }
 
-    const { disassembly_obs, measurement_obs, testing_obs, final_conclusion } = req.body || {};
+    let {
+        age, run_hours, connection_hours, fault_history, reported_fault,
+        disassembly_obs, measurement_obs, testing_obs, final_conclusion
+    } = req.body || {};
+
+    // Sanitize integer fields: convert empty strings to null
+    run_hours = run_hours === "" ? null : run_hours;
+    connection_hours = connection_hours === "" ? null : connection_hours;
 
     try {
         const result = await db.query(
             `UPDATE vfd.repairs SET 
-        disassembly_obs = COALESCE($1, disassembly_obs), 
-        measurement_obs = COALESCE($2, measurement_obs), 
-        testing_obs = COALESCE($3, testing_obs), 
-        final_conclusion = COALESCE($4, final_conclusion),
+        age = COALESCE($1, age),
+        run_hours = COALESCE($2, run_hours),
+        connection_hours = COALESCE($3, connection_hours),
+        fault_history = COALESCE($4, fault_history),
+        reported_fault = COALESCE($5, reported_fault),
+        disassembly_obs = COALESCE($6, disassembly_obs), 
+        measurement_obs = COALESCE($7, measurement_obs), 
+        testing_obs = COALESCE($8, testing_obs), 
+        final_conclusion = COALESCE($9, final_conclusion),
         updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $5 RETURNING *`,
-            [disassembly_obs, measurement_obs, testing_obs, final_conclusion, req.params.id]
+       WHERE id = $10 RETURNING *`,
+            [
+                age, run_hours, connection_hours, fault_history, reported_fault,
+                disassembly_obs, measurement_obs, testing_obs, final_conclusion,
+                req.params.id
+            ]
         );
         res.json(result.rows[0]);
     } catch (err) {

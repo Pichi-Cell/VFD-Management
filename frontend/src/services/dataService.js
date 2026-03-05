@@ -35,6 +35,11 @@ export const imageService = {
     delete: (id) => api.delete(`/images/${id}`).then(res => res.data),
 };
 
+export const userService = {
+    getAll: () => api.get('/auth').then(res => res.data),
+    create: (data) => api.post('/auth/register', data).then(res => res.data),
+};
+
 export const emailService = {
     sendNotification: (repairId, data) => api.post(`/email/repair/${repairId}`, data).then(res => res.data),
 };

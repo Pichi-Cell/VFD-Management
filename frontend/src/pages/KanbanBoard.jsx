@@ -3,20 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { repairService } from '../services/dataService';
 import { Clock, MoreVertical, Plus } from 'lucide-react';
-import NewRepairModal from '../components/NewRepairModal';
-
 const STAGES = [
     'Received', 'Testing', 'Disassembled', 'Cleaned', 'Measured', 'Diagnosed', 'Assembled', 'Finished'
 ];
 
 const KanbanBoard = () => {
     const navigate = useNavigate();
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: repairs, isLoading } = useQuery({
         queryKey: ['repairs'],
         queryFn: repairService.getAll
     });
-
+    console.log(repairs)
     if (isLoading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-4 border-accent/20 border-t-accent rounded-full animate-spin" />
@@ -25,7 +22,7 @@ const KanbanBoard = () => {
     );
 
     return (
-        <div className="flex gap-6 overflow-x-auto pb-8 min-h-[calc(100vh-200px)] snap-x snaps-mandatory">
+        <div className="flex gap-10 pb-8 min-w-max">
             {STAGES.map(stage => (
                 <div key={stage} className="flex-shrink-0 w-[350px] snap-center">
                     <div className="flex items-center justify-between mb-5 px-3">
@@ -36,7 +33,7 @@ const KanbanBoard = () => {
                             </span>
                         </div>
                         <button
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => window.dispatchEvent(new CustomEvent('open-new-repair'))}
                             className="p-1 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors"
                         >
                             <Plus size={18} />
@@ -77,8 +74,8 @@ const KanbanBoard = () => {
                                         <span>{new Date(repair.entry_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                                     </div>
                                     <div className="flex items-center">
-                                        <div className="w-7 h-7 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center text-[10px] font-black text-white ring-2 ring-slate-100">
-                                            {repair.technician_name?.[0] || 'T'}
+                                        <div className="w-fit h-7 px-2 pb-1 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center text-s font-black text-white ring-2 ring-slate-100">
+                                            {repair.technician_name || 'T'}
                                         </div>
                                     </div>
                                 </div>
@@ -93,7 +90,6 @@ const KanbanBoard = () => {
                     </div>
                 </div>
             ))}
-            <NewRepairModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
     );
 };

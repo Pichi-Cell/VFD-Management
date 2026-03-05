@@ -218,8 +218,8 @@ const RepairDetail = () => {
                                     type="button"
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold min-w-[120px] rounded-2xl transition-all ${activeTab === tab.id
-                                            ? 'bg-white text-accent shadow-sm ring-1 ring-slate-200'
-                                            : 'text-slate-400 hover:text-slate-600'
+                                        ? 'bg-white text-accent shadow-sm ring-1 ring-slate-200'
+                                        : 'text-slate-400 hover:text-slate-600'
                                         }`}
                                 >
                                     <tab.icon size={18} />
@@ -249,6 +249,17 @@ const RepairDetail = () => {
                                                     type="number"
                                                     name="run_hours"
                                                     value={formData.run_hours}
+                                                    onChange={handleInputChange}
+                                                    className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:bg-white transition-all font-medium"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase ml-1">Connect Hours</label>
+                                                <input
+                                                    type="number"
+                                                    name="connection_hours"
+                                                    value={formData.connection_hours}
                                                     onChange={handleInputChange}
                                                     className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:bg-white transition-all font-medium"
                                                     placeholder="0"
@@ -340,8 +351,8 @@ const RepairDetail = () => {
                                                                 <td className="p-4 text-sm font-medium">
                                                                     <select
                                                                         className={`w-full p-2 rounded-xl border-none focus:ring-0 text-xs font-black uppercase tracking-tighter ${stateData.state === 'Good' ? 'text-success' :
-                                                                                stateData.state === 'Faulty' ? 'text-danger' :
-                                                                                    stateData.state === 'Warning' ? 'text-warning' : 'text-slate-400'
+                                                                            stateData.state === 'Faulty' ? 'text-danger' :
+                                                                                stateData.state === 'Warning' ? 'text-warning' : 'text-slate-400'
                                                                             }`}
                                                                         value={stateData.state || ''}
                                                                         onChange={(e) => upsertComponentMutation.mutate({
