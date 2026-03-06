@@ -31,3 +31,45 @@
     @apply bg-white/70 backdrop-blur-md border border-white/30;
   }
 }
+
+/* ── Global print rules ──────────────────────────────────────
+   When the user uses Print / Export PDF (window.print()):
+   - Hide the Sidebar, Navbar, and other Layout chrome
+   - Show only the report document
+   - Set A4 page sizing
+─────────────────────────────────────────────────────────────*/
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 16mm 16mm 16mm;
+  }
+
+  /* Hide layout chrome: sidebar, top header, report action bar */
+  .no-print { display: none !important; }
+
+  /* Keep the app's beige background so empty page space at the bottom
+     of the last PDF page doesn't look jarring */
+  body, html { background: #f8fafc !important; }
+
+  /* Reset ALL layout containers that clip overflow or use fixed heights.
+     The Layout shell uses h-screen + overflow-hidden; these must be
+     reset so the browser can paginate the full report content. */
+  body > #root,
+  body > #root > div,
+  main,
+  main > div,
+  main > div > div {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin-left: 0 !important;
+  }
+
+  /* Force background colors and images to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

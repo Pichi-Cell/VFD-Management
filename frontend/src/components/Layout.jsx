@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
     return (
         <div className="h-screen flex bg-bg overflow-hidden">
             {/* Sidebar */}
-            <aside className="z-50 w-64 bg-primary text-white flex flex-col fixed inset-y-0 shadow-2xl">
+            <aside className="no-print z-50 w-64 bg-primary text-white flex flex-col fixed inset-y-0 shadow-2xl">
                 <div className="p-6 text-xl font-bold border-b border-primary-light flex items-center gap-2">
                     <Database className="text-accent" />
                     <span>VFD Manager</span>
@@ -90,7 +90,7 @@ const Layout = ({ children }) => {
 
             {/* Main Content */}
             <main className="flex-1 ml-64 h-screen flex flex-col overflow-hidden relative">
-                <header className="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200 flex items-center px-10 justify-between flex-shrink-0 z-40">
+                <header className="no-print h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200 flex items-center px-10 justify-between flex-shrink-0 z-40">
                     <div>
                         <h1 className="text-xl font-black text-slate-900 tracking-tight">{getPageTitle()}</h1>
                         <p className="text-[10px] font-black text-slate-400 border-t border-slate-100 flex items-center gap-1">

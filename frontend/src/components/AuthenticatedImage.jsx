@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const AuthenticatedImage = ({ src, className, alt = '' }) => {
+const AuthenticatedImage = ({ src, className, alt = '', style }) => {
     const [imageUrl, setImageUrl] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -50,7 +50,7 @@ const AuthenticatedImage = ({ src, className, alt = '' }) => {
         return <div className={`${className} bg-slate-100 flex items-center justify-center text-[10px] text-danger font-bold`}>ERROR</div>;
     }
 
-    return <img src={imageUrl} className={className} alt={alt} />;
+    return <img src={imageUrl} className={className} alt={alt} style={style} crossOrigin="anonymous" />;
 };
 
 export default AuthenticatedImage;
