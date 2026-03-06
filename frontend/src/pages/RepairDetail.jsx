@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { repairService, imageService, emailService } from '../services/dataService';
+import { toast } from 'sonner';
 import {
     ArrowLeft, Save, ChevronRight, ChevronLeft,
     Settings, Clipboard, Activity, CheckCircle2,
@@ -29,7 +30,7 @@ const RepairDetail = () => {
         mutationFn: (data) => repairService.updateData(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['repair', id]);
-            alert('Data updated successfully');
+            toast.success('Data updated successfully');
         }
     });
 
@@ -64,10 +65,10 @@ const RepairDetail = () => {
     const sendEmailMutation = useMutation({
         mutationFn: (data) => emailService.sendNotification(id, data),
         onSuccess: () => {
-            alert('Email sent successfully');
+            toast.success('Email sent successfully');
         },
         onError: (err) => {
-            alert('Failed to send email: ' + (err.response?.data?.msg || err.message));
+            toast.error('Failed to send email: ' + (err.response?.data?.msg || err.message));
         }
     });
 
@@ -372,11 +373,16 @@ const RepairDetail = () => {
                                                                         className="w-full bg-transparent border-none focus:ring-0 text-sm placeholder:text-slate-300 font-medium"
                                                                         placeholder="Add notes..."
                                                                         defaultValue={stateData.observations || ''}
-                                                                        onBlur={(e) => upsertComponentMutation.mutate({
-                                                                            component_name: comp,
-                                                                            state: stateData.state,
-                                                                            observations: e.target.value
-                                                                        })}
+                                                                        key={`${comp}-${stateData.observations}`}
+                                                                        onBlur={(e) => {
+                                                                            if (e.target.value !== (stateData.observations || '')) {
+                                                                                upsertComponentMutation.mutate({
+                                                                                    component_name: comp,
+                                                                                    state: stateData.state,
+                                                                                    observations: e.target.value
+                                                                                });
+                                                                            }
+                                                                        }}
                                                                     />
                                                                 </td>
                                                             </tr>

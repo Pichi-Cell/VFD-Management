@@ -63,3 +63,15 @@ exports.createVfdModel = async (req, res) => {
         res.status(500).json({ msg: 'Server error while creating VFD model', error: err.message });
     }
 };
+exports.deleteVfdModel = async (req, res) => {
+    try {
+        await db.query('DELETE FROM vfd.vfd_models WHERE id = $1', [req.params.id]);
+        res.json({ msg: 'VFD model removed' });
+    } catch (err) {
+        if (err.code === '23503') {
+            return res.status(400).json({ msg: 'Cannot delete model: It has associated VFDs or repairs' });
+        }
+        console.error('Delete VFD Model Error:', err.message);
+        res.status(500).json({ msg: 'Server error while deleting VFD model', error: err.message });
+    }
+};

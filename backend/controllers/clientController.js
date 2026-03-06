@@ -28,3 +28,15 @@ exports.createClient = async (req, res) => {
         res.status(500).json({ msg: 'Server error while creating client', error: err.message });
     }
 };
+exports.deleteClient = async (req, res) => {
+    try {
+        await db.query('DELETE FROM vfd.clients WHERE id = $1', [req.params.id]);
+        res.json({ msg: 'Client removed' });
+    } catch (err) {
+        if (err.code === '23503') {
+            return res.status(400).json({ msg: 'Cannot delete client: It has associated VFDs or repairs' });
+        }
+        console.error('Delete Client Error:', err.message);
+        res.status(500).json({ msg: 'Server error while deleting client', error: err.message });
+    }
+};

@@ -1,6 +1,9 @@
 const db = require('../db');
 
 exports.getRepairs = async (req, res) => {
+    const { all } = req.query;
+    const filterHidden = all === 'true' ? '' : 'WHERE r.is_hidden = false';
+
     try {
         const result = await db.query(`
       SELECT r.*, v.serial_number, v.internal_number, c.name as client_name, m.brand, m.model, u.username as technician_name
@@ -9,6 +12,7 @@ exports.getRepairs = async (req, res) => {
       JOIN vfd.clients c ON v.client_id = c.id
       JOIN vfd.vfd_models m ON v.model_id = m.id
       LEFT JOIN vfd.users u ON r.technician_id = u.id
+      ${filterHidden}
       ORDER BY r.updated_at DESC
     `);
         res.json(result.rows);
@@ -158,5 +162,46 @@ exports.upsertComponentState = async (req, res) => {
     } catch (err) {
         console.error('Upsert Component State Error:', err.message);
         res.status(500).json({ msg: 'Server error while updating component state', error: err.message });
+    }
+};
+exports.updateRepairVisibility = async (req, res) => {
+    if (!req.params.id) {
+        return res.status(400).json({ msg: 'Repair ID is required' });
+    }
+
+    const { is_hidden } = req.body;
+
+    try {
+        const result = await db.query(
+            'UPDATE vfd.repairs SET is_hidden = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+            [is_hidden, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Update Visibility Error:', err.message);
+        res.status(500).json({ msg: 'Server error while updating visibility', error: err.message });
+    }
+};
+exports.deleteRepair = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Start a transaction to ensure atomic deletion
+        await db.query('BEGIN');
+
+        // Delete child records
+        await db.query('DELETE FROM vfd.repair_images WHERE repair_id = $1', [id]);
+        await db.query('DELETE FROM vfd.component_states WHERE repair_id = $1', [id]);
+
+        // Delete the repair itself
+        const result = await db.query('DELETE FROM vfd.repairs WHERE id = $1 RETURNING id', [id]);
+
+        await db.query('COMMIT');
+
+        if (result.rows.length === 0) return res.status(404).json({ msg: 'Repair not found' });
+        res.json({ msg: 'Repair removed' });
+    } catch (err) {
+        await db.query('ROLLBACK');
+        console.error('Delete Repair Error:', err.message);
+        res.status(500).json({ msg: 'Server error while deleting repair', error: err.message });
     }
 };

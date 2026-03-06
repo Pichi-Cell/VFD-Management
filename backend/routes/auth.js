@@ -13,4 +13,10 @@ router.post('/register', auth, authController.register);
 // @route   POST api/auth/login
 router.post('/login', authController.login);
 
+// @route   PUT api/auth/:id
+router.put('/:id', auth, authController.updateUser);
+
+// @route   DELETE api/auth/:id
+router.delete('/:id', auth, authController.deleteUser);
+
 module.exports = router;

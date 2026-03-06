@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS vfd.repairs (
     -- Diagnosis & Conclusion
     final_conclusion TEXT,
     approval_date DATE,
+    is_hidden BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -80,5 +81,6 @@ CREATE TABLE IF NOT EXISTS vfd.component_states (
     component_name VARCHAR(100) NOT NULL, -- 'Carcasa', 'Cooler', 'IGBT', etc.
     state VARCHAR(100),
     observations TEXT,
-    proposed_solution TEXT
+    proposed_solution TEXT,
+    UNIQUE(repair_id, component_name)
 );

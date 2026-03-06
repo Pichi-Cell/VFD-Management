@@ -21,4 +21,10 @@ router.put('/:id/data', auth, repairController.updateRepairData);
 // @route   POST api/repairs/:id/components
 router.post('/:id/components', auth, repairController.upsertComponentState);
 
+// @route   PUT api/repairs/:id/visibility
+router.put('/:id/visibility', auth, repairController.updateRepairVisibility);
+
+// @route   DELETE api/repairs/:id
+router.delete('/:id', auth, repairController.deleteRepair);
+
 module.exports = router;

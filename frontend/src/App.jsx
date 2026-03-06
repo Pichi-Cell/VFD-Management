@@ -5,7 +5,9 @@ import KanbanBoard from './pages/KanbanBoard';
 import Login from './pages/Login';
 import RepairDetail from './pages/RepairDetail';
 import ReportView from './pages/ReportView';
+import HistoryPage from './pages/History';
 import Layout from './components/Layout';
+import { Toaster } from 'sonner';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -20,6 +22,7 @@ import Settings from './pages/Settings';
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" richColors closeButton />
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -27,13 +30,6 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <KanbanBoard />
-              </Layout>
-            </PrivateRoute>
-          } />
-          <Route path="/clients" element={
-            <PrivateRoute>
-              <Layout>
-                <Settings />
               </Layout>
             </PrivateRoute>
           } />
@@ -55,6 +51,13 @@ function App() {
             <PrivateRoute>
               <Layout>
                 <ReportView />
+              </Layout>
+            </PrivateRoute>
+          } />
+          <Route path="/history" element={
+            <PrivateRoute>
+              <Layout>
+                <HistoryPage />
               </Layout>
             </PrivateRoute>
           } />

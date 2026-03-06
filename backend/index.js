@@ -23,6 +23,20 @@ app.use('/api/repairs', require('./routes/repairs'));
 app.use('/api/images', require('./routes/images'));
 app.use('/api/email', require('./routes/email'));
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+const { checkConnection } = require('./db');
+
+const startServer = async () => {
+    try {
+        await checkConnection();
+        console.log('Database connection successful');
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Database connection failed:', err.message);
+        process.exit(1);
+    }
+};
+
+startServer();

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Database, Users, Settings, Plus } from 'lucide-react';
+import { LogOut, LayoutDashboard, Database, Users, Settings, Plus, History } from 'lucide-react';
 import NewRepairModal from './NewRepairModal';
 
 const Layout = ({ children }) => {
@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
     // Determine title based on location
     const getPageTitle = () => {
         if (location.pathname === '/') return 'Repair Dashboard';
-        if (location.pathname === '/settings' || location.pathname === '/clients') return 'Settings & Management';
+        if (location.pathname === '/settings') return 'Settings & Management';
         if (location.pathname.includes('/repair/')) {
             if (location.pathname.endsWith('/report')) return 'Technical Report';
             return 'Repair Detail';
@@ -51,12 +51,12 @@ const Layout = ({ children }) => {
                         <span>Workflow</span>
                     </button>
                     <button
-                        onClick={() => navigate('/settings')}
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${location.pathname === '/settings' || location.pathname === '/clients' ? 'bg-accent text-white' : 'hover:bg-primary-light text-slate-400 hover:text-white'
+                        onClick={() => navigate('/history')}
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full text-left ${location.pathname === '/history' ? 'bg-accent text-white' : 'hover:bg-primary-light text-slate-400 hover:text-white'
                             }`}
                     >
-                        <Users size={20} />
-                        <span>Clients</span>
+                        <History size={20} />
+                        <span>History</span>
                     </button>
                     <button
                         onClick={() => navigate('/settings')}

@@ -15,4 +15,7 @@ router.get('/models', auth, vfdController.getVfdModels);
 // @route   POST api/vfds/models
 router.post('/models', auth, vfdController.createVfdModel);
 
+// @route   DELETE api/vfds/models/:id
+router.delete('/models/:id', auth, vfdController.deleteVfdModel);
+
 module.exports = router;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Database, Lock, User, ArrowRight } from 'lucide-react';
 import { authService } from '../services/auth';
+import { toast } from 'sonner';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -19,6 +20,7 @@ const Login = () => {
             navigate('/');
         } catch (err) {
             setError('Invalid username or password');
+            toast.error('Login failed: Invalid username or password');
         } finally {
             setLoading(false);
         }

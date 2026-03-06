@@ -68,3 +68,43 @@ exports.getUsers = async (req, res) => {
         res.status(500).json({ msg: 'Server error while fetching users', error: err.message });
     }
 };
+exports.updateUser = async (req, res) => {
+    const { username, password, role } = req.body;
+    const { id } = req.params;
+
+    try {
+        let query = 'UPDATE vfd.users SET username = $1, role = $2';
+        let params = [username, role];
+
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            const password_hash = await bcrypt.hash(password, salt);
+            query += ', password_hash = $3 WHERE id = $4';
+            params.push(password_hash, id);
+        } else {
+            query += ' WHERE id = $3';
+            params.push(id);
+        }
+
+        const result = await db.query(query + ' RETURNING id, username, role', params);
+        if (result.rows.length === 0) return res.status(404).json({ msg: 'User not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Update User Error:', err.message);
+        res.status(500).json({ msg: 'Server error while updating user', error: err.message });
+    }
+};
+
+exports.deleteUser = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Set technician_id to NULL in repairs before deleting user to avoid FK error
+        await db.query('UPDATE vfd.repairs SET technician_id = NULL WHERE technician_id = $1', [id]);
+        const result = await db.query('DELETE FROM vfd.users WHERE id = $1 RETURNING id', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ msg: 'User not found' });
+        res.json({ msg: 'User removed' });
+    } catch (err) {
+        console.error('Delete User Error:', err.message);
+        res.status(500).json({ msg: 'Server error while deleting user', error: err.message });
+    }
+};
