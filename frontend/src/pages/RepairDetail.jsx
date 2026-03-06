@@ -9,6 +9,7 @@ import {
     AlertCircle, Info, Camera, Trash2, Image as ImageIcon, Plus,
     FileText, Mail
 } from 'lucide-react';
+import AuthenticatedImage from '../components/AuthenticatedImage';
 
 const STAGES = [
     'Received', 'Testing', 'Disassembled', 'Cleaned', 'Measured', 'Diagnosed', 'Assembled', 'Finished'
@@ -451,8 +452,8 @@ const RepairDetail = () => {
                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                                 {repair.images?.map(img => (
                                                     <div key={img.id} className="aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-sm relative group bg-slate-50">
-                                                        <img
-                                                            src={`http://localhost:5000${img.file_path}`}
+                                                        <AuthenticatedImage
+                                                            src={img.file_path}
                                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                             alt={img.step_name}
                                                         />

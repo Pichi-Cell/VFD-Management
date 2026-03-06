@@ -10,8 +10,8 @@ router.post('/upload', auth, upload.single('image'), imageController.uploadImage
 // @route   GET api/images/repair/:repairId
 router.get('/repair/:repairId', auth, imageController.getRepairImages);
 
-// @route   GET api/images/serve/:filename
-router.get('/serve/:filename', auth, imageController.serveImage);
+// @route   GET api/images/serve/:repairId/:filename
+router.get('/serve/:repairId/:filename', auth, imageController.serveImage);
 
 // @route   DELETE api/images/:id
 router.delete('/:id', auth, imageController.deleteImage);

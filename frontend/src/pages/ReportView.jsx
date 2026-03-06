@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { repairService } from '../services/dataService';
 import { ArrowLeft, Printer, Download, Mail } from 'lucide-react';
+import AuthenticatedImage from '../components/AuthenticatedImage';
 
 const ReportView = () => {
     const { id } = useParams();
@@ -141,7 +142,7 @@ const ReportView = () => {
                                 <td className="p-4 text-sm font-bold text-slate-700">{comp.component_name}</td>
                                 <td className="p-4 text-center">
                                     <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter ${comp.state === 'Good' ? 'bg-success/10 text-success' :
-                                            comp.state === 'Faulty' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'
+                                        comp.state === 'Faulty' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'
                                         }`}>
                                         {comp.state}
                                     </span>
@@ -160,8 +161,8 @@ const ReportView = () => {
                     <div className="grid grid-cols-2 gap-4">
                         {repair.images.map(img => (
                             <div key={img.id} className="border border-slate-100 rounded-xl overflow-hidden p-2">
-                                <img
-                                    src={`http://localhost:5000${img.file_path}`}
+                                <AuthenticatedImage
+                                    src={img.file_path}
                                     className="w-full h-48 object-cover rounded-lg mb-2"
                                     alt={img.step_name}
                                 />
