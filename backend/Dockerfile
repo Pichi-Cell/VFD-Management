@@ -51,6 +51,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app ./
+COPY --from=builder /root/.cache/puppeteer /root/.cache/puppeteer
 
 EXPOSE 3000
 CMD ["npm", "start"]
