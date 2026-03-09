@@ -205,3 +205,49 @@ exports.deleteRepair = async (req, res) => {
         res.status(500).json({ msg: 'Server error while deleting repair', error: err.message });
     }
 };
+
+exports.downloadPDF = async (req, res) => {
+    const { id } = req.params;
+    const pdfService = require('../services/pdfService');
+
+    try {
+        const repairResult = await db.query(`
+      SELECT r.*, v.serial_number, v.internal_number, c.name as client_name, m.brand, m.model, m.power, m.input_voltage, u.username as technician_name
+      FROM vfd.repairs r
+      JOIN vfd.vfds v ON r.vfd_id = v.id
+      JOIN vfd.clients c ON v.client_id = c.id
+      JOIN vfd.vfd_models m ON v.model_id = m.id
+      LEFT JOIN vfd.users u ON r.technician_id = u.id
+      WHERE r.id = $1
+    `, [id]);
+
+        if (repairResult.rows.length === 0) {
+            return res.status(404).json({ msg: 'Repair not found' });
+        }
+
+        const componentStatesResult = await db.query(
+            'SELECT * FROM vfd.component_states WHERE repair_id = $1',
+            [id]
+        );
+
+        const imagesResult = await db.query(
+            'SELECT * FROM vfd.repair_images WHERE repair_id = $1',
+            [id]
+        );
+
+        const repairData = {
+            ...repairResult.rows[0],
+            component_states: componentStatesResult.rows,
+            images: imagesResult.rows
+        };
+
+        const pdfBuffer = await pdfService.generateRepairPDF(repairData);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Informe_${repairData.internal_number || repairData.serial_number}.pdf`);
+        res.send(pdfBuffer);
+    } catch (err) {
+        console.error('Download PDF Error:', err.message);
+        res.status(500).json({ msg: 'Server error while generating PDF', error: err.message });
+    }
+};

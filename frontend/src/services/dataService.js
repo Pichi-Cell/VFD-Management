@@ -23,6 +23,7 @@ export const repairService = {
     updateComponentState: (id, componentData) => api.post(`/repairs/${id}/components`, componentData).then(res => res.data),
     updateVisibility: (id, isHidden) => api.put(`/repairs/${id}/visibility`, { is_hidden: isHidden }).then(res => res.data),
     delete: (id) => api.delete(`/repairs/${id}`).then(res => res.data),
+    downloadPDF: (id) => api.get(`/repairs/${id}/pdf`, { responseType: 'blob' }).then(res => res.data),
 };
 
 export const imageService = {
@@ -44,6 +45,8 @@ export const userService = {
     create: (data) => api.post('/auth/register', data).then(res => res.data),
     update: (id, data) => api.put(`/auth/${id}`, data).then(res => res.data),
     delete: (id) => api.delete(`/auth/${id}`).then(res => res.data),
+    checkSetupStatus: () => api.get('/auth/setup-status').then(res => res.data),
+    setup: (data) => api.post('/auth/setup', data).then(res => res.data),
 };
 
 export const emailService = {

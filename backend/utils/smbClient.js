@@ -33,6 +33,26 @@ const connect = () => {
     });
 };
 
+/**
+ * Disconnects the network share.
+ */
+const disconnect = () => {
+    const host = (process.env.SMB_HOST || '').replace(/\\/g, '');
+    const shareName = process.env.SMB_SHARE || '';
+    const uncPath = `\\\\${host}\\${shareName}`;
+
+    return new Promise((resolve) => {
+        exec(`net use ${uncPath} /delete /y`, (error) => {
+            if (error) {
+                console.warn(`Debug: Error during disconnect (already disconnected?): ${error.message}`);
+            } else {
+                console.log('SMB Disconnected successfully');
+            }
+            resolve();
+        });
+    });
+};
+
 const getUNCPath = (remoteName, subFolder = '') => {
     const host = (process.env.SMB_HOST || '').replace(/\\/g, '');
     const shareName = (process.env.SMB_SHARE || '').replace(/\\/g, '');
@@ -60,63 +80,78 @@ const testConnection = async () => {
         return { success: true, isDirectory: stats.isDirectory() };
     } catch (err) {
         return { success: false, message: err.message };
+    } finally {
+        await disconnect();
     }
 };
 
 const uploadFile = async (localPath, remoteName, subFolder = '') => {
-    await connect();
-    const remoteUNC = getUNCPath(remoteName, subFolder);
+    try {
+        await connect();
+        const remoteUNC = getUNCPath(remoteName, subFolder);
 
-    // Ensure parent directory exists (recursive)
-    const remoteDir = path.dirname(remoteUNC);
-    if (!fs.existsSync(remoteDir)) {
-        fs.mkdirSync(remoteDir, { recursive: true });
-    }
-
-    return new Promise((resolve, reject) => {
-        try {
-            fs.copyFileSync(localPath, remoteUNC);
-            resolve(remoteUNC);
-        } catch (err) {
-            console.error(`Upload Error: ${err.message}`);
-            reject(err);
+        // Ensure parent directory exists (recursive)
+        const remoteDir = path.dirname(remoteUNC);
+        if (!fs.existsSync(remoteDir)) {
+            fs.mkdirSync(remoteDir, { recursive: true });
         }
-    });
+
+        return new Promise((resolve, reject) => {
+            try {
+                fs.copyFileSync(localPath, remoteUNC);
+                resolve(remoteUNC);
+            } catch (err) {
+                console.error(`Upload Error: ${err.message}`);
+                reject(err);
+            }
+        });
+    } finally {
+        await disconnect();
+    }
 };
 
 const getFileBuffer = async (remoteName, subFolder = '') => {
-    await connect();
-    const remoteUNC = getUNCPath(remoteName, subFolder);
+    try {
+        await connect();
+        const remoteUNC = getUNCPath(remoteName, subFolder);
 
-    return new Promise((resolve, reject) => {
-        try {
-            const data = fs.readFileSync(remoteUNC);
-            resolve(data);
-        } catch (err) {
-            console.error(`Read Error: ${err.message}`);
-            reject(err);
-        }
-    });
+        return new Promise((resolve, reject) => {
+            try {
+                const data = fs.readFileSync(remoteUNC);
+                resolve(data);
+            } catch (err) {
+                console.error(`Read Error: ${err.message}`);
+                reject(err);
+            }
+        });
+    } finally {
+        await disconnect();
+    }
 };
 
 const deleteFile = async (remoteName, subFolder = '') => {
-    await connect();
-    const remoteUNC = getUNCPath(remoteName, subFolder);
+    try {
+        await connect();
+        const remoteUNC = getUNCPath(remoteName, subFolder);
 
-    return new Promise((resolve, reject) => {
-        try {
-            fs.unlinkSync(remoteUNC);
-            resolve();
-        } catch (err) {
-            console.error(`Delete Error: ${err.message}`);
-            reject(err);
-        }
-    });
+        return new Promise((resolve, reject) => {
+            try {
+                fs.unlinkSync(remoteUNC);
+                resolve();
+            } catch (err) {
+                console.error(`Delete Error: ${err.message}`);
+                reject(err);
+            }
+        });
+    } finally {
+        await disconnect();
+    }
 };
 
 module.exports = {
     testConnection,
     uploadFile,
     getFileBuffer,
-    deleteFile
+    deleteFile,
+    disconnect
 };

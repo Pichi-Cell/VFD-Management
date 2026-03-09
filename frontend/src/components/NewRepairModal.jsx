@@ -211,7 +211,11 @@ const NewRepairModal = ({ isOpen, onClose }) => {
                             <div className="flex gap-2">
                                 <button onClick={() => setSubStep('list')} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Back</button>
                                 <button
-                                    onClick={() => createVfdMutation.mutate({ ...newVfd, client_id: selectedClient.id })}
+                                    onClick={() => createVfdMutation.mutate({
+                                        ...newVfd,
+                                        internal_number: newVfd.internal_number ? parseInt(newVfd.internal_number, 10) : null,
+                                        client_id: selectedClient.id
+                                    })}
                                     disabled={!newVfd.model_id || !newVfd.serial_number}
                                     className="flex-1 bg-accent text-white py-3 rounded-xl font-bold disabled:opacity-50"
                                 >

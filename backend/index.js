@@ -22,13 +22,18 @@ app.use('/api/vfds', require('./routes/vfds'));
 app.use('/api/repairs', require('./routes/repairs'));
 app.use('/api/images', require('./routes/images'));
 app.use('/api/email', require('./routes/email'));
+app.use('/api/config', require('./routes/config'));
 
 const { checkConnection } = require('./db');
+const storageService = require('./services/storageService');
 
 const startServer = async () => {
     try {
         await checkConnection();
         console.log('Database connection successful');
+
+        await storageService.init();
+        console.log('Storage service initialized');
 
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);

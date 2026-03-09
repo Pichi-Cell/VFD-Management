@@ -5,6 +5,12 @@ const db = require('../db');
 exports.register = async (req, res) => {
     // Sanity checks
     console.log(req);
+
+    // Only admins can register new users
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ msg: 'Only administrators can create new users' });
+    }
+
     if (!req.body || !req.body.username || !req.body.password) {
         return res.status(400).json({ msg: 'Please provide both username and password' });
     }
@@ -57,6 +63,77 @@ exports.login = async (req, res) => {
     } catch (err) {
         console.error('Login Error:', err.message);
         res.status(500).json({ msg: 'Server error during login', error: err.message });
+    }
+};
+
+exports.getSetupStatus = async (req, res) => {
+    try {
+        const result = await db.query('SELECT COUNT(*) FROM vfd.users');
+        const count = parseInt(result.rows[0].count, 10);
+        res.json({ setupRequired: count === 0 });
+    } catch (err) {
+        console.error('Setup Status Error:', err.message);
+        res.status(500).json({ msg: 'Server error checking setup status', error: err.message });
+    }
+};
+
+exports.setup = async (req, res) => {
+    // Check if setup is actually required
+    try {
+        const countResult = await db.query('SELECT COUNT(*) FROM vfd.users');
+        const count = parseInt(countResult.rows[0].count, 10);
+        if (count > 0) {
+            return res.status(403).json({ msg: 'Setup has already been completed' });
+        }
+    } catch (err) {
+        return res.status(500).json({ msg: 'Server error verifying setup status', error: err.message });
+    }
+
+    const { username, password, config } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ msg: 'Please provide both username and password for the admin user' });
+    }
+
+    try {
+        // Begin transaction
+        await db.query('BEGIN');
+
+        // Create Admin User
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(password, salt);
+
+        const newUser = await db.query(
+            'INSERT INTO vfd.users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id, username, role',
+            [username, password_hash, 'admin']
+        );
+
+        // Update settings if provided
+        if (config && typeof config === 'object') {
+            for (const [key, value] of Object.entries(config)) {
+                await db.query(
+                    'INSERT INTO vfd.settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+                    [key, String(value)]
+                );
+            }
+        }
+
+        await db.query('COMMIT');
+
+        // Emit token to log in instantly
+        const payload = { id: newUser.rows[0].id, role: newUser.rows[0].role };
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
+            if (err) {
+                console.error('JWT Signing Error during setup:', err);
+                return res.status(500).json({ msg: 'Error generating token' });
+            }
+            res.json({ msg: 'Setup completed successfully', token, user: newUser.rows[0] });
+        });
+
+    } catch (err) {
+        await db.query('ROLLBACK');
+        console.error('Setup Error:', err.message);
+        res.status(500).json({ msg: 'Server error during setup', error: err.message });
     }
 };
 exports.getUsers = async (req, res) => {

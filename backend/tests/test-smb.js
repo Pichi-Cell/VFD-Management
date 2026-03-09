@@ -1,7 +1,7 @@
-require('dotenv').config({ path: "../.env" });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const smbClient = require('../utils/smbClient');
 const fs = require('fs');
-const path = require('path');
 
 async function runTest() {
     const testFile = 'connection_test.txt';

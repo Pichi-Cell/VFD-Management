@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: vfd_db
+    restart: always
+    environment:
+      POSTGRES_DB: vfd_db
+      POSTGRES_USER: vfd_user
+      POSTGRES_PASSWORD: vfd_password
+    volumes:
+      - vfd_db_data:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - vfd_network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vfd_backend
+    restart: always
+    environment:
+      DB_USER: vfd_user
+      DB_HOST: db
+      DB_NAME: vfd_db
+      DB_PASSWORD: vfd_password
+      DB_PORT: 5432
+      JWT_SECRET: your_jwt_secret_here
+      EMAIL_USER: your_email@gmail.com
+      EMAIL_PASS: your_email_password_app_code
+      STORAGE_TYPE: LOCAL
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - vfd_uploads:/app/uploads
+    depends_on:
+      - db
+    networks:
+      - vfd_network
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vfd_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - vfd_network
+
+networks:
+  vfd_network:
+    driver: bridge
+
+volumes:
+  vfd_db_data:
+  vfd_uploads:

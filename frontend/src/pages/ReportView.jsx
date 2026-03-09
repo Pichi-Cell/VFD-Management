@@ -372,7 +372,22 @@ const ReportView = () => {
                         Print
                     </button>
                     <button
-                        onClick={() => window.print()}
+                        onClick={async () => {
+                            try {
+                                toast.loading('Generating PDF...', { id: 'pdf-gen' });
+                                const blob = await repairService.downloadPDF(id);
+                                const url = window.URL.createObjectURL(new Blob([blob]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', `Informe_${repair.internal_number || repair.serial_number}.pdf`);
+                                document.body.appendChild(link);
+                                link.click();
+                                toast.success('PDF downloaded successfully', { id: 'pdf-gen' });
+                            } catch (err) {
+                                console.error('PDF download error:', err);
+                                toast.error('Failed to generate PDF', { id: 'pdf-gen' });
+                            }
+                        }}
                         className="flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-xl font-black text-sm hover:bg-slate-800 transition-all shadow-lg shadow-slate-300 active:scale-95"
                     >
                         <Download size={17} />

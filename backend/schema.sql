@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS vfd.vfd_models (
 CREATE TABLE IF NOT EXISTS vfd.vfds (
     id SERIAL PRIMARY KEY,
     serial_number VARCHAR(100) UNIQUE NOT NULL,
-    internal_number VARCHAR(100),
+    internal_number INTEGER,
     client_id INTEGER REFERENCES vfd.clients(id),
     model_id INTEGER REFERENCES vfd.vfd_models(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -84,3 +84,12 @@ CREATE TABLE IF NOT EXISTS vfd.component_states (
     proposed_solution TEXT,
     UNIQUE(repair_id, component_name)
 );
+-- Settings table
+CREATE TABLE IF NOT EXISTS vfd.settings (
+    key VARCHAR(50) PRIMARY KEY,
+    value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO vfd.settings (key, value) VALUES ('STORAGE_TYPE', 'LOCAL') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('UPLOAD_DIR', '/app/uploads') ON CONFLICT DO NOTHING;

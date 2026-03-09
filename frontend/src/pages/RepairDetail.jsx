@@ -98,7 +98,12 @@ const RepairDetail = () => {
 
     const handleSave = (e) => {
         e.preventDefault();
-        updateDataMutation.mutate(formData);
+        const dataToSave = {
+            ...formData,
+            run_hours: formData.run_hours ? parseInt(formData.run_hours, 10) : null,
+            connection_hours: formData.connection_hours ? parseInt(formData.connection_hours, 10) : null
+        };
+        updateDataMutation.mutate(dataToSave);
     };
 
     const handleStatusChange = (newStatus) => {

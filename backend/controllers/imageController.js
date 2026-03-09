@@ -1,6 +1,5 @@
 const db = require('../db');
-
-const smbClient = require('../utils/smbClient');
+const storageService = require('../services/storageService');
 const path = require('path');
 const fs = require('fs');
 
@@ -22,19 +21,15 @@ const getRepairFolder = async (repair_id) => {
 
     const { client_name, internal_number, vfd_model, entry_date } = result.rows[0];
 
-    // Format date as DD-MM-YY (as in user's example 18-12-25)
-    // Using UTC to avoid timezone shifts for receipt date
     const d = new Date(entry_date);
     const day = String(d.getUTCDate()).padStart(2, '0');
     const month = String(d.getUTCMonth() + 1).padStart(2, '0');
     const year = String(d.getUTCFullYear()).slice(-2);
     const dateStr = `${day}-${month}-${year}`;
 
-    // Clean names to remove spaces (as in user example "TeodoroFusile")
     const cleanClient = client_name.replace(/\s+/g, '');
     const cleanModel = vfd_model.replace(/\s+/g, '');
 
-    // [ClientName]-[InternalID]-[Model]-[DATE]
     const folderName = `${cleanClient}-${internal_number}-${cleanModel}-${dateStr}`;
     return path.join(folderName, 'PHOTOS');
 };
@@ -55,15 +50,12 @@ exports.uploadImage = async (req, res) => {
     try {
         const subFolder = await getRepairFolder(repair_id);
 
-        // Upload to SMB in specific folder
-        await smbClient.uploadFile(localPath, filename, subFolder);
+        await storageService.uploadFile(localPath, filename, subFolder);
 
-        // Delete local copy
         fs.unlink(localPath, (err) => {
             if (err) console.error('Error deleting local temp file:', err.message);
         });
 
-        // Store with repairId in the serve path
         const file_path = `/api/images/serve/${repair_id}/${filename}`;
 
         const result = await db.query(
@@ -73,7 +65,7 @@ exports.uploadImage = async (req, res) => {
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Upload Image Error:', err.message);
-        res.status(500).json({ msg: 'Server error while saving image to SMB', error: err.message });
+        res.status(500).json({ msg: 'Server error while saving image', error: err.message });
     }
 };
 
@@ -82,9 +74,8 @@ exports.serveImage = async (req, res) => {
         const { repairId, filename } = req.params;
         const subFolder = await getRepairFolder(repairId);
 
-        const data = await smbClient.getFileBuffer(filename, subFolder);
+        const data = await storageService.getFileBuffer(filename, subFolder);
 
-        // Basic extension check for content type
         const ext = path.extname(filename).toLowerCase();
         const contentType = ext === '.png' ? 'image/png' : 'image/jpeg';
 
@@ -92,7 +83,7 @@ exports.serveImage = async (req, res) => {
         res.send(data);
     } catch (err) {
         console.error('Serve Image Error:', err.message);
-        res.status(404).json({ msg: 'Image not found on SMB server' });
+        res.status(404).json({ msg: 'Image not found' });
     }
 };
 
@@ -123,9 +114,9 @@ exports.deleteImage = async (req, res) => {
 
         try {
             const subFolder = await getRepairFolder(repair_id);
-            await smbClient.deleteFile(filename, subFolder);
+            await storageService.deleteFile(filename, subFolder);
         } catch (smbErr) {
-            console.error('Error deleting from SMB:', smbErr.message);
+            console.error('Error deleting file:', smbErr.message);
         }
 
         await db.query('DELETE FROM vfd.repair_images WHERE id = $1', [req.params.id]);

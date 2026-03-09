@@ -12,6 +12,7 @@ erDiagram
     REPAIRS ||--o{ COMPONENT_STATES : "tracks"
     REPAIRS ||--o{ REPAIR_IMAGES : "contains"
     USERS ||--o{ REPAIRS : "assigned as technician"
+    SETTINGS ||--o{ SETTINGS : "stores config"
 
     CLIENTS {
         integer id PK
@@ -48,6 +49,12 @@ erDiagram
         text measurement_obs
         text final_conclusion
         timestamp entry_date
+    }
+
+    SETTINGS {
+        string key PK
+        text value
+        timestamp updated_at
     }
 ```
 

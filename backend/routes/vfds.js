@@ -3,11 +3,13 @@ const router = express.Router();
 const vfdController = require('../controllers/vfdController');
 const auth = require('../middleware/auth');
 
+const { vfdValidation } = require('../middleware/validation');
+
 // @route   GET api/vfds
 router.get('/', auth, vfdController.getVfds);
 
 // @route   POST api/vfds
-router.post('/', auth, vfdController.createVfd);
+router.post('/', auth, vfdValidation, vfdController.createVfd);
 
 // @route   GET api/vfds/models
 router.get('/models', auth, vfdController.getVfdModels);
