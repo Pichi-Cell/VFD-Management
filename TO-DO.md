@@ -1,1 +1,0 @@
-Set up (Dockerization, first configurations)

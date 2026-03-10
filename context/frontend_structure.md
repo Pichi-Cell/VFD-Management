@@ -21,8 +21,7 @@ We use **TanStack Query (React Query)** to handle all server state.
 
 ## UI System
 - **Tailwind CSS**: Used for all styling.
-- **Design Tokens**:
-    - `accent`: Main brand color.
-    - `success`/`warning`/`danger`: Status colors.
-    - `rounded-2xl/3xl`: Heavy use of large corner radii for a modern "premium" feel.
-    - **Glassmorphism**: Subtle use of `backdrop-blur` in modals and sticky headers.
+- **Design System**: For detailed instructions on the "premium" aesthetic, colors, and components, see [styling_guidelines.md](file:///c:/Users/lucas/.gemini/antigravity/scratch/VFD/VFD-Management/context/styling_guidelines.md).
+- **Key Tokens**:
+    - `rounded-2xl/3xl`: Heavy use of large corner radii.
+    - **Glassmorphism**: Subtle use of `backdrop-blur` in modals.

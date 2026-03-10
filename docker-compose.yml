@@ -38,8 +38,8 @@ services:
       - db
     networks:
       - vfd_network
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
 
   frontend:
     build:
@@ -49,6 +49,9 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend
     networks:

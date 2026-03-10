@@ -67,7 +67,7 @@ const Setup = () => {
 
         let config = {
             STORAGE_TYPE: storageType,
-            UPLOADS_DIR: updatesDir,
+            UPLOADS_DIR: uploadsDir,
         };
 
         if (storageType === 'SMB') {
@@ -128,8 +128,8 @@ const Setup = () => {
                         ].map((s) => (
                             <div key={s.num} className="flex flex-col items-center gap-2">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-all duration-300 shadow-md ${step > s.num ? 'bg-accent text-white' :
-                                        step === s.num ? 'bg-slate-900 text-white shadow-xl scale-110' :
-                                            'bg-white text-slate-300 border-2 border-slate-100'
+                                    step === s.num ? 'bg-slate-900 text-white shadow-xl scale-110' :
+                                        'bg-white text-slate-300 border-2 border-slate-100'
                                     }`}>
                                     {step > s.num ? <CheckCircle2 className="w-6 h-6" /> : <s.icon className="w-5 h-5" />}
                                 </div>

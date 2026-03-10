@@ -7,7 +7,15 @@ RUN npm run build
 
 FROM nginx:stable-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-# Default nginx config is usually fine, but you might need a custom one for SPA routing
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+
+# Copy configuration templates
+RUN mkdir -p /etc/nginx/templates
+COPY nginx/nginx.http.conf /etc/nginx/templates/nginx.http.conf.template
+COPY nginx/nginx.ssl.conf /etc/nginx/templates/nginx.ssl.conf.template
+
+# Copy initialization script to check for SSL
+COPY nginx/99-ssl-setup.sh /docker-entrypoint.d/99-ssl-setup.sh
+RUN chmod +x /docker-entrypoint.d/99-ssl-setup.sh
+
+EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]
