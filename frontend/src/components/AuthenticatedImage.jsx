@@ -15,7 +15,7 @@ const AuthenticatedImage = ({ src, className, alt = '', style }) => {
                 setError(false);
 
                 // Construct the full URL if it's relative
-                const fullUrl = src.startsWith('http') ? src : `http://localhost:3000${src}`;
+                const fullUrl = src.startsWith('http') ? src : src;
 
                 const response = await api.get(fullUrl, {
                     responseType: 'blob'
