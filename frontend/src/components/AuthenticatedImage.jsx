@@ -15,9 +15,13 @@ const AuthenticatedImage = ({ src, className, alt = '', style }) => {
                 setError(false);
 
                 // Construct the full URL if it's relative
-                const fullUrl = src.startsWith('http') ? src : src;
+                // Strip /api if it's already there since our api service adds it via baseURL
+                let url = src;
+                if (!src.startsWith('http') && src.startsWith('/api')) {
+                    url = src.replace('/api', '');
+                }
 
-                const response = await api.get(fullUrl, {
+                const response = await api.get(url, {
                     responseType: 'blob'
                 });
 
