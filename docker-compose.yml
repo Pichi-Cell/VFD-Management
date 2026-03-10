@@ -32,6 +32,7 @@ services:
       EMAIL_PASS: your_email_password_app_code
       STORAGE_TYPE: LOCAL
       UPLOAD_DIR: /app/uploads
+      PORT: 3000
     volumes:
       - vfd_uploads:/app/uploads
     depends_on:
