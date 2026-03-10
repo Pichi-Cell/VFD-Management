@@ -9,9 +9,9 @@ FROM nginx:stable-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy configuration templates
-RUN mkdir -p /etc/nginx/templates
-COPY nginx/nginx.http.conf /etc/nginx/templates/nginx.http.conf.template
-COPY nginx/nginx.ssl.conf /etc/nginx/templates/nginx.ssl.conf.template
+RUN mkdir -p /etc/nginx/custom-templates
+COPY nginx/nginx.http.conf /etc/nginx/custom-templates/nginx.http.conf.template
+COPY nginx/nginx.ssl.conf /etc/nginx/custom-templates/nginx.ssl.conf.template
 
 # Copy initialization script to check for SSL
 COPY nginx/99-ssl-setup.sh /docker-entrypoint.d/99-ssl-setup.sh
