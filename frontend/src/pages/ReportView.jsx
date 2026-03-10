@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { repairService } from '../services/dataService';
 import { ArrowLeft, Printer, Download } from 'lucide-react';
 import AuthenticatedImage from '../components/AuthenticatedImage';
+import { toast } from 'sonner';
 
 /* ─────────────────────────────────────────────────────────────
    Small presentational helpers
