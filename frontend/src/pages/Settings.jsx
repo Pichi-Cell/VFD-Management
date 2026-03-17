@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userService, clientService, vfdService } from '../services/dataService';
-import { Users, Database, Shield, Settings as SettingsIcon, Search, Plus, ExternalLink, X, Trash2, Edit2 } from 'lucide-react';
+import { userService, clientService, vfdService, configService } from '../services/dataService';
+import { Users, Database, Shield, Settings as SettingsIcon, Search, Plus, ExternalLink, X, Trash2, Edit2, HardDrive, Mail, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Settings = () => {
@@ -27,6 +27,30 @@ const Settings = () => {
     const { data: models, isLoading: modelsLoading } = useQuery({
         queryKey: ['models'],
         queryFn: vfdService.getModels
+    });
+
+    const { data: config, isLoading: configLoading } = useQuery({
+        queryKey: ['config'],
+        queryFn: configService.get,
+        enabled: isAdmin
+    });
+
+    const [configForm, setConfigForm] = useState(null);
+
+    // Initialize config form when data is loaded
+    React.useEffect(() => {
+        if (config && !configForm) {
+            setConfigForm(config);
+        }
+    }, [config, configForm]);
+
+    const updateConfigMutation = useMutation({
+        mutationFn: configService.update,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['config']);
+            toast.success('System configuration updated successfully');
+        },
+        onError: (err) => toast.error(err.response?.data?.msg || 'Failed to update configuration')
     });
 
     const createUserMutation = useMutation({
@@ -137,7 +161,8 @@ const Settings = () => {
     const sections = [
         { id: 'users', label: 'Users', icon: Users, count: users?.length, adminOnly: true },
         { id: 'clients', label: 'Clients', icon: Database, count: clients?.length },
-        { id: 'models', label: 'VFD Models', icon: SettingsIcon, count: models?.length }
+        { id: 'models', label: 'VFD Models', icon: SettingsIcon, count: models?.length },
+        { id: 'system', label: 'System Config', icon: SettingsIcon, adminOnly: true }
     ].filter(s => !s.adminOnly || isAdmin);
 
     return (
@@ -182,12 +207,14 @@ const Settings = () => {
                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-medium text-sm"
                             />
                         </div>
-                        <button
-                            onClick={() => { setIsModalOpen(true); setEditingId(null); setFormData({}); }}
-                            className="bg-accent text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-accent-hover shadow-lg shadow-accent/20 transition-all flex items-center gap-2 flex-shrink-0"
-                        >
-                            <Plus size={16} /> Add {activeSection.slice(0, -1)}
-                        </button>
+                        {activeSection !== 'system' && (
+                            <button
+                                onClick={() => { setIsModalOpen(true); setEditingId(null); setFormData({}); }}
+                                className="bg-accent text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-accent-hover shadow-lg shadow-accent/20 transition-all flex items-center gap-2 flex-shrink-0"
+                            >
+                                <Plus size={16} /> Add {activeSection.slice(0, -1)}
+                            </button>
+                        )}
                     </div>
 
                     {/* Tables */}
@@ -324,6 +351,132 @@ const Settings = () => {
                                     ))}
                                 </tbody>
                             </table>
+                        )}
+
+                        {activeSection === 'system' && !configLoading && configForm && (
+                            <div className="p-8 space-y-10 animate-in fade-in duration-500">
+                                {/* Storage Section */}
+                                <section className="space-y-6">
+                                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                                        <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                            <HardDrive size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-slate-800 tracking-tight">Storage Settings</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Image & Report Persistence</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Storage Type</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {['LOCAL', 'SMB'].map(type => (
+                                                    <button
+                                                        key={type}
+                                                        type="button"
+                                                        onClick={() => setConfigForm({ ...configForm, STORAGE_TYPE: type })}
+                                                        className={`p-3 rounded-xl font-bold border-2 transition-all flex items-center justify-center gap-2 ${configForm.STORAGE_TYPE === type ? 'border-accent bg-accent/5 text-accent shadow-sm' : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'}`}
+                                                    >
+                                                        <span className="text-xs uppercase tracking-widest">{type}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Uploads Directory</label>
+                                            <input
+                                                value={configForm.UPLOAD_DIR || ''}
+                                                onChange={(e) => setConfigForm({ ...configForm, UPLOAD_DIR: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {configForm.STORAGE_TYPE === 'SMB' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMB Host</label>
+                                                <input value={configForm.SMB_HOST || ''} onChange={(e) => setConfigForm({ ...configForm, SMB_HOST: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMB Share</label>
+                                                <input value={configForm.SMB_SHARE || ''} onChange={(e) => setConfigForm({ ...configForm, SMB_SHARE: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMB User</label>
+                                                <input value={configForm.SMB_USER || ''} onChange={(e) => setConfigForm({ ...configForm, SMB_USER: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </section>
+
+                                {/* Email Section */}
+                                <section className="space-y-6">
+                                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                                        <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                            <Mail size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-slate-800 tracking-tight">Email Settings (SMTP)</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Report Distribution</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div className="md:col-span-3 space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMTP Host</label>
+                                            <input value={configForm.EMAIL_HOST || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_HOST: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Port</label>
+                                            <input value={configForm.EMAIL_PORT || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_PORT: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
+                                            <input value={configForm.EMAIL_USER || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_USER: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                                            <input type="password" value={configForm.EMAIL_PASS || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_PASS: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-6 pt-2">
+                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                            <div className="relative">
+                                                <input type="checkbox" className="peer sr-only" checked={configForm.EMAIL_SECURE === 'true'} onChange={(e) => setConfigForm({ ...configForm, EMAIL_SECURE: e.target.checked.toString() })} />
+                                                <div className="w-10 h-6 bg-slate-200 rounded-full peer-checked:bg-accent transition-colors"></div>
+                                                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-slate-900 transition-colors">Use Secure (TLS)</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                            <div className="relative">
+                                                <input type="checkbox" className="peer sr-only" checked={configForm.EMAIL_REJECT_UNAUTHORIZED === 'true'} onChange={(e) => setConfigForm({ ...configForm, EMAIL_REJECT_UNAUTHORIZED: e.target.checked.toString() })} />
+                                                <div className="w-10 h-6 bg-slate-200 rounded-full peer-checked:bg-accent transition-colors"></div>
+                                                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-slate-900 transition-colors">Reject Unauth</span>
+                                        </label>
+                                    </div>
+                                </section>
+
+                                <div className="pt-6 border-t border-slate-100 flex justify-end">
+                                    <button
+                                        onClick={() => updateConfigMutation.mutate(configForm)}
+                                        disabled={updateConfigMutation.isPending}
+                                        className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                                    >
+                                        {updateConfigMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
                         )}
 
                         {((activeSection === 'users' && usersLoading) ||

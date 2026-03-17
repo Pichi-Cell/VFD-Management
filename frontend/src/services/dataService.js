@@ -18,7 +18,7 @@ export const repairService = {
     getAll: (includeHidden = false) => api.get(`/repairs${includeHidden ? '?all=true' : ''}`).then(res => res.data),
     getById: (id) => api.get(`/repairs/${id}`).then(res => res.data),
     create: (data) => api.post('/repairs', data).then(res => res.data),
-    updateStatus: (id, status) => api.put(`/repairs/${id}/status`, { status }).then(res => res.data),
+    updateStatus: (id, status) => api.put(`/repairs/${id}/status`, { status }),
     updateData: (id, data) => api.put(`/repairs/${id}/data`, data).then(res => res.data),
     updateComponentState: (id, componentData) => api.post(`/repairs/${id}/components`, componentData).then(res => res.data),
     updateVisibility: (id, isHidden) => api.put(`/repairs/${id}/visibility`, { is_hidden: isHidden }).then(res => res.data),
@@ -51,4 +51,9 @@ export const userService = {
 
 export const emailService = {
     sendNotification: (repairId, data) => api.post(`/email/repair/${repairId}`, data).then(res => res.data),
+};
+
+export const configService = {
+    get: () => api.get('/config').then(res => res.data),
+    update: (data) => api.post('/config', data).then(res => res.data),
 };

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: 'http://localhost:5000/api',
 });
 
 // Interceptor to add auth token

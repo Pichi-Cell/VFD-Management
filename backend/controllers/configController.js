@@ -1,5 +1,6 @@
 const db = require('../db');
 const storageService = require('../services/storageService');
+const emailService = require('../services/emailService');
 
 exports.getConfig = async (req, res) => {
     try {
@@ -15,15 +16,32 @@ exports.getConfig = async (req, res) => {
 };
 
 exports.updateConfig = async (req, res) => {
-    const { key, value } = req.body;
+    const config = req.body; // Expecting an object { KEY: VALUE, ... }
+
     try {
-        if (key === 'STORAGE_TYPE') {
-            await storageService.setType(value);
-        } else {
-            await db.query('INSERT INTO vfd.settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2', [key, value]);
+        if (!config || typeof config !== 'object') {
+            return res.status(400).json({ msg: 'Invalid configuration format' });
         }
-        res.json({ msg: 'Config updated' });
+
+        await db.query('BEGIN');
+
+        for (const [key, value] of Object.entries(config)) {
+            await db.query(
+                'INSERT INTO vfd.settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+                [key, String(value)]
+            );
+        }
+
+        await db.query('COMMIT');
+
+        // Re-initialize services to apply changes
+        await storageService.init();
+        await emailService.init();
+
+        res.json({ msg: 'Configuration updated successfully' });
     } catch (err) {
+        await db.query('ROLLBACK');
+        console.error('Update Config Error:', err.message);
         res.status(500).json({ msg: 'Error updating config', error: err.message });
     }
 };
