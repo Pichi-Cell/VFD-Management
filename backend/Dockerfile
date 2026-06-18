@@ -45,6 +45,7 @@ RUN apt-get update && apt-get install -y \
     libxshmfence1 \
     libxtst6 \
     lsb-release \
+    smbclient \
     wget \
     xdg-utils \
     --no-install-recommends \

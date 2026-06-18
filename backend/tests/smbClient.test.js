@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 describe('SMB client command safety', () => {
     let execFile;
@@ -44,5 +47,44 @@ describe('SMB client command safety', () => {
             pass: 'pass',
             basePath: '../outside'
         })).toThrow(/Invalid SMB base path/);
+    });
+
+    it('should use smbclient with SMB1 dialects inside Linux containers', async () => {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vfd-smb-test-'));
+        const localFile = path.join(tmpDir, 'photo.png');
+        fs.writeFileSync(localFile, 'image');
+        execFile = vi.fn((command, args, options, callback) => callback(null, '', ''));
+        const smbClientModule = await import('../utils/smbClient.js');
+        const smbClient = smbClientModule.default || smbClientModule;
+        smbClient._setExecFileForTest(execFile);
+        smbClient._setPlatformForTest('linux');
+
+        try {
+            await smbClient.uploadFile(localFile, 'photo.png', 'Repair 1', {
+                host: '\\\\175.10.0.59',
+                share: 'Desarrollo',
+                user: 'jcaminos',
+                pass: 'secret',
+                basePath: '!variadores\\Informes Variadores'
+            });
+
+            const putCall = execFile.mock.calls.at(-1);
+            expect(putCall[0]).toBe('smbclient');
+            expect(putCall[1]).toEqual(expect.arrayContaining([
+                '//175.10.0.59/Desarrollo',
+                '-U',
+                'jcaminos',
+                '-m',
+                'NT1',
+                '--option=client min protocol=NT1',
+                '--option=client max protocol=NT1',
+                '-c',
+                expect.stringMatching(/^put ".+" "!variadores\/Informes Variadores\/Repair 1\/photo\.png"$/)
+            ]));
+            expect(putCall[1]).not.toContain('secret');
+            expect(putCall[2].env.PASSWD).toBe('secret');
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
     });
 });
