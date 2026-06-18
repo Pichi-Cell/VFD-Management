@@ -127,12 +127,10 @@ const Settings = () => {
         }
     });
 
-    const handleDelete = (id, label) => {
-        if (window.confirm(`Are you sure you want to delete this ${label}?`)) {
-            if (activeSection === 'clients') deleteClientMutation.mutate(id);
-            if (activeSection === 'models') deleteModelMutation.mutate(id);
-            if (activeSection === 'users') deleteUserMutation.mutate(id);
-        }
+    const handleDelete = (id) => {
+        if (activeSection === 'clients') deleteClientMutation.mutate(id);
+        if (activeSection === 'models') deleteModelMutation.mutate(id);
+        if (activeSection === 'users') deleteUserMutation.mutate(id);
     };
 
     const handleEditUser = (u) => {
@@ -262,7 +260,7 @@ const Settings = () => {
                                                         <Edit2 size={16} />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(u.id, 'user')}
+                                                        onClick={() => handleDelete(u.id)}
                                                         className="p-2 text-slate-300 hover:text-danger transition-colors"
                                                         title="Delete User"
                                                     >
@@ -301,7 +299,7 @@ const Settings = () => {
                                                     </button>
                                                     {isAdmin && (
                                                         <button
-                                                            onClick={() => handleDelete(client.id, 'client')}
+                                                            onClick={() => handleDelete(client.id)}
                                                             className="p-2 text-slate-300 hover:text-danger transition-colors"
                                                             title="Delete Client"
                                                         >
@@ -339,7 +337,7 @@ const Settings = () => {
                                             <td className="p-6 text-right">
                                                 {isAdmin && (
                                                     <button
-                                                        onClick={() => handleDelete(model.id, 'model')}
+                                                        onClick={() => handleDelete(model.id)}
                                                         className="p-2 text-slate-300 hover:text-danger transition-colors"
                                                         title="Delete Model"
                                                     >

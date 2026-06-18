@@ -57,9 +57,7 @@ const RepairCard = memo(({ repair, index, navigate, visibilityMutation }) => {
                                     title="Hide from board"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (window.confirm('Hide this repair from the board?')) {
-                                            visibilityMutation.mutate({ id: repair.id, isHidden: true });
-                                        }
+                                        visibilityMutation.mutate({ id: repair.id, isHidden: true });
                                     }}
                                     className="p-1.5 bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-lg transition-all"
                                 >

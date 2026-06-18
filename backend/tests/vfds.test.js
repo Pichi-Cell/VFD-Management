@@ -45,4 +45,36 @@ describe('VFDs Controller', () => {
         const res = await request(app).post('/api/vfds').send({});
         expect(res.statusCode).toEqual(401);
     });
+
+    it('should delete orphan VFDs before deleting a model with no repairs', async () => {
+        pool.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({ rows: [] }) // repair check
+            .mockResolvedValueOnce({}) // delete orphan VFDs
+            .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // delete model
+            .mockResolvedValueOnce({}); // COMMIT
+
+        const res = await request(app)
+            .delete('/api/vfds/models/1')
+            .set('x-auth-token', dummyToken);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.msg).toBe('VFD model removed');
+        expect(pool.query).toHaveBeenCalledWith('DELETE FROM vfd.vfds WHERE model_id = $1', ['1']);
+    });
+
+    it('should block model deletion while repairs still exist', async () => {
+        pool.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] }) // repair check
+            .mockResolvedValueOnce({}); // ROLLBACK
+
+        const res = await request(app)
+            .delete('/api/vfds/models/1')
+            .set('x-auth-token', dummyToken);
+
+        expect(res.statusCode).toEqual(400);
+        expect(res.body.msg).toBe('Cannot delete model: It has associated repairs');
+        expect(pool.query).not.toHaveBeenCalledWith('DELETE FROM vfd.vfds WHERE model_id = $1', ['1']);
+    });
 });

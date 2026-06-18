@@ -45,9 +45,7 @@ const History = () => {
     });
 
     const handleDeleteRepair = (id) => {
-        if (window.confirm('Are you sure you want to delete this repair? This will also delete all associated images and component states.')) {
-            deleteRepairMutation.mutate(id);
-        }
+        deleteRepairMutation.mutate(id);
     };
 
     const filteredRepairs = repairs?.filter(repair => {

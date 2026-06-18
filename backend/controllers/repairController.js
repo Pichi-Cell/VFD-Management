@@ -188,16 +188,38 @@ exports.deleteRepair = async (req, res) => {
         // Start a transaction to ensure atomic deletion
         await db.query('BEGIN');
 
+        const repairResult = await db.query(
+            'SELECT vfd_id FROM vfd.repairs WHERE id = $1 FOR UPDATE',
+            [id]
+        );
+
+        if (repairResult.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ msg: 'Repair not found' });
+        }
+
+        const { vfd_id } = repairResult.rows[0];
+
         // Delete child records
         await db.query('DELETE FROM vfd.repair_images WHERE repair_id = $1', [id]);
         await db.query('DELETE FROM vfd.component_states WHERE repair_id = $1', [id]);
 
         // Delete the repair itself
-        const result = await db.query('DELETE FROM vfd.repairs WHERE id = $1 RETURNING id', [id]);
+        await db.query('DELETE FROM vfd.repairs WHERE id = $1', [id]);
+
+        // Equipment is created as part of the repair intake flow. Once the last
+        // repair for a VFD is deleted, remove that orphan so clients/models can
+        // be deleted cleanly.
+        await db.query(`
+            DELETE FROM vfd.vfds v
+            WHERE v.id = $1
+              AND NOT EXISTS (
+                SELECT 1 FROM vfd.repairs r WHERE r.vfd_id = v.id
+              )
+        `, [vfd_id]);
 
         await db.query('COMMIT');
 
-        if (result.rows.length === 0) return res.status(404).json({ msg: 'Repair not found' });
         res.json({ msg: 'Repair removed' });
     } catch (err) {
         await db.query('ROLLBACK');

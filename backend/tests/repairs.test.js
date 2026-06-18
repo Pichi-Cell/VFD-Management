@@ -50,4 +50,40 @@ describe('Repairs Controller', () => {
         // If it fails with 500 "Server error while generating PDF", it means it reached the service.
         expect([200, 500]).toContain(res.statusCode);
     });
+
+    it('should delete an orphan VFD when deleting its last repair', async () => {
+        pool.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({ rows: [{ vfd_id: 11 }] }) // repair lookup
+            .mockResolvedValueOnce({}) // delete images
+            .mockResolvedValueOnce({}) // delete component states
+            .mockResolvedValueOnce({}) // delete repair
+            .mockResolvedValueOnce({}) // delete orphan VFD
+            .mockResolvedValueOnce({}); // COMMIT
+
+        const res = await request(app)
+            .delete('/api/repairs/7')
+            .set('x-auth-token', dummyToken);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.msg).toBe('Repair removed');
+        expect(pool.query).toHaveBeenCalledWith(
+            expect.stringContaining('DELETE FROM vfd.vfds'),
+            [11]
+        );
+    });
+
+    it('should return 404 when deleting a missing repair', async () => {
+        pool.query
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({ rows: [] }) // repair lookup
+            .mockResolvedValueOnce({}); // ROLLBACK
+
+        const res = await request(app)
+            .delete('/api/repairs/999')
+            .set('x-auth-token', dummyToken);
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.body.msg).toBe('Repair not found');
+    });
 });

@@ -65,11 +65,35 @@ exports.createVfdModel = async (req, res) => {
 };
 exports.deleteVfdModel = async (req, res) => {
     try {
-        await db.query('DELETE FROM vfd.vfd_models WHERE id = $1', [req.params.id]);
+        await db.query('BEGIN');
+
+        const repairResult = await db.query(`
+            SELECT 1
+            FROM vfd.repairs r
+            JOIN vfd.vfds v ON r.vfd_id = v.id
+            WHERE v.model_id = $1
+            LIMIT 1
+        `, [req.params.id]);
+
+        if (repairResult.rows.length > 0) {
+            await db.query('ROLLBACK');
+            return res.status(400).json({ msg: 'Cannot delete model: It has associated repairs' });
+        }
+
+        await db.query('DELETE FROM vfd.vfds WHERE model_id = $1', [req.params.id]);
+        const result = await db.query('DELETE FROM vfd.vfd_models WHERE id = $1 RETURNING id', [req.params.id]);
+
+        await db.query('COMMIT');
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ msg: 'VFD model not found' });
+        }
+
         res.json({ msg: 'VFD model removed' });
     } catch (err) {
+        await db.query('ROLLBACK');
         if (err.code === '23503') {
-            return res.status(400).json({ msg: 'Cannot delete model: It has associated VFDs or repairs' });
+            return res.status(400).json({ msg: 'Cannot delete model: It has associated repairs' });
         }
         console.error('Delete VFD Model Error:', err.message);
         res.status(500).json({ msg: 'Server error while deleting VFD model', error: err.message });

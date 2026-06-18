@@ -96,14 +96,25 @@ const RepairDetail = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const buildDataToSave = () => ({
+        ...formData,
+        run_hours: formData.run_hours ? parseInt(formData.run_hours, 10) : null,
+        connection_hours: formData.connection_hours ? parseInt(formData.connection_hours, 10) : null
+    });
+
+    const saveRepairData = () => {
+        updateDataMutation.mutate(buildDataToSave());
+    };
+
     const handleSave = (e) => {
         e.preventDefault();
-        const dataToSave = {
-            ...formData,
-            run_hours: formData.run_hours ? parseInt(formData.run_hours, 10) : null,
-            connection_hours: formData.connection_hours ? parseInt(formData.connection_hours, 10) : null
-        };
-        updateDataMutation.mutate(dataToSave);
+        saveRepairData();
+    };
+
+    const handleTabChange = (tabId) => {
+        if (tabId === activeTab) return;
+        saveRepairData();
+        setActiveTab(tabId);
     };
 
     const handleStatusChange = (newStatus) => {
@@ -223,7 +234,7 @@ const RepairDetail = () => {
                                 <button
                                     key={tab.id}
                                     type="button"
-                                    onClick={() => setActiveTab(tab.id)}
+                                    onClick={() => handleTabChange(tab.id)}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold min-w-[120px] rounded-2xl transition-all ${activeTab === tab.id
                                         ? 'bg-white text-accent shadow-sm ring-1 ring-slate-200'
                                         : 'text-slate-400 hover:text-slate-600'
@@ -465,7 +476,7 @@ const RepairDetail = () => {
                                                         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
                                                             <button
                                                                 type="button"
-                                                                onClick={(e) => { e.preventDefault(); if (window.confirm('Delete image?')) deleteImageMutation.mutate(img.id); }}
+                                                                onClick={(e) => { e.preventDefault(); deleteImageMutation.mutate(img.id); }}
                                                                 className="self-end p-1.5 bg-white/20 backdrop-blur-md text-white rounded-lg hover:bg-danger transition-colors"
                                                             >
                                                                 <Trash2 size={14} />
