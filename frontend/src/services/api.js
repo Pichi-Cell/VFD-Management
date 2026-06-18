@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL,
 });
 
 // Interceptor to add auth token

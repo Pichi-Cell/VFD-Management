@@ -14,3 +14,7 @@ The React Compiler is currently not compatible with SWC. See [this issue](https:
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Environment
+
+The frontend reads `VITE_API_BASE_URL` at build time. It defaults to `/api`, which works with the Vite proxy in local development and with the Docker/Nginx reverse proxy. Set `VITE_API_BASE_URL=http://localhost:5000/api` only when the frontend must call the backend directly.

@@ -22,6 +22,7 @@ The following keys are stored in the `vfd.settings` table (or initially provided
 - `EMAIL_SECURE`: Boolean string (`true` or `false`). True typically for port 465.
 - `EMAIL_USER`: The sender's email address or username.
 - `EMAIL_PASS`: The sender's password or app password.
+- `EMAIL_FROM_NAME`: Sender display name used in the `From` header. Defaults to `VFD Workflow`.
 - `EMAIL_REJECT_UNAUTHORIZED`: Boolean string (`true` or `false`). This is crucial for legacy servers without proper SSL/TLS certificates. Setting this to `false` allows connecting without rejecting self-signed or missing certificates.
 
 ### Initialization `init()`

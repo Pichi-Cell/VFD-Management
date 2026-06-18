@@ -1,6 +1,7 @@
 const emailService = require('../services/emailService');
 const db = require('../db');
 const pdfService = require('../services/pdfService');
+const brandingService = require('../services/brandingService');
 
 exports.sendFinishedNotification = async (req, res) => {
     const { repairId } = req.params;
@@ -21,6 +22,7 @@ exports.sendFinishedNotification = async (req, res) => {
         const r = repairResult.rows[0];
 
         const stage = r.status;
+        const branding = await brandingService.getBranding();
         const subject = `Variador | ${r.client_name} | ${r.internal_number || r.serial_number} | ${r.brand} ${r.model} - [${stage}]`;
 
         let stageText = '';
@@ -34,7 +36,7 @@ exports.sendFinishedNotification = async (req, res) => {
 
         const html = `
             <div style="font-family: sans-serif; color: #334155; line-height: 1.6;">
-                <h2 style="color: #0f172a;">Gestión de Variadores - DMD Compresores</h2>
+                <h2 style="color: #0f172a;">Gestión de Variadores - ${branding.companyName}</h2>
                 ${stageText}
                 
                 <h3 style="color: #3b82f6;">Detalles del Equipo:</h3>
@@ -57,7 +59,7 @@ exports.sendFinishedNotification = async (req, res) => {
 
                 <br/>
                 <p>Saludos cordiales,</p>
-                <p><strong>Departamento de Desarrollo</strong><br/>DMD Compresores</p>
+                <p><strong>${branding.emailSignatureName}</strong><br/>${branding.companyName}</p>
             </div>
         `;
 

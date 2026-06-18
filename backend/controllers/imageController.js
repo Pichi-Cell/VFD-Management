@@ -2,6 +2,7 @@ const db = require('../db');
 const storageService = require('../services/storageService');
 const path = require('path');
 const fs = require('fs');
+const { sanitizePathSegment } = require('../utils/pathSafety');
 
 const getRepairFolder = async (repair_id) => {
     const query = `
@@ -27,10 +28,11 @@ const getRepairFolder = async (repair_id) => {
     const year = String(d.getUTCFullYear()).slice(-2);
     const dateStr = `${day}-${month}-${year}`;
 
-    const cleanClient = client_name.replace(/\s+/g, '');
-    const cleanModel = vfd_model.replace(/\s+/g, '');
+    const cleanClient = sanitizePathSegment(client_name);
+    const cleanModel = sanitizePathSegment(vfd_model);
+    const cleanInternal = sanitizePathSegment(internal_number);
 
-    const folderName = `${cleanClient}-${internal_number}-${cleanModel}-${dateStr}`;
+    const folderName = `${cleanClient}-${cleanInternal}-${cleanModel}-${dateStr}`;
     return path.join(folderName, 'PHOTOS');
 };
 
@@ -64,8 +66,8 @@ exports.uploadImage = async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Upload Image Error:', err.message);
-        res.status(500).json({ msg: 'Server error while saving image', error: err.message });
+        console.error('Upload Image Error:', err);
+        res.status(500).json({ msg: 'Server error while saving image' });
     }
 };
 
@@ -77,7 +79,7 @@ exports.serveImage = async (req, res) => {
         const data = await storageService.getFileBuffer(filename, subFolder);
 
         const ext = path.extname(filename).toLowerCase();
-        const contentType = ext === '.png' ? 'image/png' : 'image/jpeg';
+        const contentType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
 
         res.set('Content-Type', contentType);
         res.send(data);
@@ -95,8 +97,8 @@ exports.getRepairImages = async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
-        console.error('Get Images Error:', err.message);
-        res.status(500).json({ msg: 'Server error while fetching images', error: err.message });
+        console.error('Get Images Error:', err);
+        res.status(500).json({ msg: 'Server error while fetching images' });
     }
 };
 
@@ -116,14 +118,16 @@ exports.deleteImage = async (req, res) => {
             const subFolder = await getRepairFolder(repair_id);
             await storageService.deleteFile(filename, subFolder);
         } catch (smbErr) {
-            console.error('Error deleting file:', smbErr.message);
+            console.error('Error deleting file:', smbErr);
         }
 
         await db.query('DELETE FROM vfd.repair_images WHERE id = $1', [req.params.id]);
 
         res.json({ msg: 'Image deleted' });
     } catch (err) {
-        console.error('Delete Image Error:', err.message);
-        res.status(500).json({ msg: 'Server error while deleting image', error: err.message });
+        console.error('Delete Image Error:', err);
+        res.status(500).json({ msg: 'Server error while deleting image' });
     }
 };
+
+exports.getRepairFolder = getRepairFolder;

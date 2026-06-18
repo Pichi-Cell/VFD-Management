@@ -67,7 +67,7 @@ const Setup = () => {
 
         let config = {
             STORAGE_TYPE: storageType,
-            UPLOADS_DIR: uploadsDir,
+            UPLOAD_DIR: uploadsDir,
         };
 
         if (storageType === 'SMB') {

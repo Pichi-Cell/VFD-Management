@@ -93,3 +93,9 @@ CREATE TABLE IF NOT EXISTS vfd.settings (
 
 INSERT INTO vfd.settings (key, value) VALUES ('STORAGE_TYPE', 'LOCAL') ON CONFLICT DO NOTHING;
 INSERT INTO vfd.settings (key, value) VALUES ('UPLOAD_DIR', '/app/uploads') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('EMAIL_FROM_NAME', 'VFD Workflow') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('BRAND_COMPANY_NAME', 'DMD Compresores') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('BRAND_DEPARTMENT_NAME', 'Depto. de Desarrollo') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('REPORT_TITLE', 'Informe Técnico') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('REPORT_FOOTER_TEXT', 'Documento generado por el sistema de gestión de variadores - DMD Compresores') ON CONFLICT DO NOTHING;
+INSERT INTO vfd.settings (key, value) VALUES ('EMAIL_SIGNATURE_NAME', 'Departamento de Desarrollo') ON CONFLICT DO NOTHING;

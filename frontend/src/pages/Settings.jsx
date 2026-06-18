@@ -408,6 +408,14 @@ const Settings = () => {
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMB User</label>
                                                 <input value={configForm.SMB_USER || ''} onChange={(e) => setConfigForm({ ...configForm, SMB_USER: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
                                             </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMB Password</label>
+                                                <input type="password" value={configForm.SMB_PASS || ''} onChange={(e) => setConfigForm({ ...configForm, SMB_PASS: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMB Base Path</label>
+                                                <input value={configForm.SMB_BASE_PATH || ''} onChange={(e) => setConfigForm({ ...configForm, SMB_BASE_PATH: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                            </div>
                                         </div>
                                     )}
                                 </section>
@@ -425,13 +433,17 @@ const Settings = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                        <div className="md:col-span-3 space-y-2">
+                                        <div className="md:col-span-2 space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">SMTP Host</label>
                                             <input value={configForm.EMAIL_HOST || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_HOST: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Port</label>
                                             <input value={configForm.EMAIL_PORT || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_PORT: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">From Name</label>
+                                            <input value={configForm.EMAIL_FROM_NAME || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_FROM_NAME: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
                                         </div>
                                     </div>
 
@@ -463,6 +475,42 @@ const Settings = () => {
                                             </div>
                                             <span className="text-[10px] font-black uppercase text-slate-500 group-hover:text-slate-900 transition-colors">Reject Unauth</span>
                                         </label>
+                                    </div>
+                                </section>
+
+                                {/* Branding Section */}
+                                <section className="space-y-6">
+                                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                                        <div className="p-2 bg-accent/10 text-accent rounded-xl">
+                                            <SettingsIcon size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-slate-800 tracking-tight">Branding & Reports</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PDF and Email Defaults</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Company Name</label>
+                                            <input value={configForm.BRAND_COMPANY_NAME || ''} onChange={(e) => setConfigForm({ ...configForm, BRAND_COMPANY_NAME: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Department Name</label>
+                                            <input value={configForm.BRAND_DEPARTMENT_NAME || ''} onChange={(e) => setConfigForm({ ...configForm, BRAND_DEPARTMENT_NAME: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Report Title</label>
+                                            <input value={configForm.REPORT_TITLE || ''} onChange={(e) => setConfigForm({ ...configForm, REPORT_TITLE: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Signature</label>
+                                            <input value={configForm.EMAIL_SIGNATURE_NAME || ''} onChange={(e) => setConfigForm({ ...configForm, EMAIL_SIGNATURE_NAME: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Report Footer Text</label>
+                                            <input value={configForm.REPORT_FOOTER_TEXT || ''} onChange={(e) => setConfigForm({ ...configForm, REPORT_FOOTER_TEXT: e.target.value })} className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all font-bold text-sm" />
+                                        </div>
                                     </div>
                                 </section>
 

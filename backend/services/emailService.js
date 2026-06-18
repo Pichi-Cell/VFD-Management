@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const db = require('../db');
+const { applyDefaults, rowsToConfig } = require('../config/configSchema');
+const brandingService = require('./brandingService');
 
 /**
  * EmailService abstracts email operations.
@@ -14,6 +16,7 @@ class EmailService {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
             rejectUnauthorized: process.env.EMAIL_REJECT_UNAUTHORIZED !== 'false',
+            fromName: process.env.EMAIL_FROM_NAME || 'VFD Workflow',
         };
         this.initialized = false;
         this.transporter = null;
@@ -22,10 +25,8 @@ class EmailService {
     async init() {
         try {
             const result = await db.query('SELECT key, value FROM vfd.settings');
-            const settings = {};
-            result.rows.forEach(row => {
-                settings[row.key] = row.value;
-            });
+            const settings = rowsToConfig(result.rows);
+            const config = applyDefaults(settings);
 
             // Fallback Logic: DB -> .env -> Default
             const hosts = [settings.EMAIL_HOST, process.env.EMAIL_HOST, 'smtp.gmail.com'];
@@ -46,6 +47,9 @@ class EmailService {
             const rejects = [settings.EMAIL_REJECT_UNAUTHORIZED, process.env.EMAIL_REJECT_UNAUTHORIZED, 'true'];
             this.config.rejectUnauthorized = rejects.find(r => r !== undefined && r !== null).toString() === 'true';
 
+            const fromNames = [settings.EMAIL_FROM_NAME, process.env.EMAIL_FROM_NAME, config.EMAIL_FROM_NAME];
+            this.config.fromName = fromNames.find(n => n !== undefined && n !== null);
+
             // Auto-Persistence: If from .env and not in DB, save it
             const saveSetting = async (key, val) => {
                 if (val !== undefined && val !== null && !settings[key]) {
@@ -59,6 +63,7 @@ class EmailService {
             await saveSetting('EMAIL_USER', process.env.EMAIL_USER);
             await saveSetting('EMAIL_PASS', process.env.EMAIL_PASS);
             await saveSetting('EMAIL_REJECT_UNAUTHORIZED', process.env.EMAIL_REJECT_UNAUTHORIZED);
+            await saveSetting('EMAIL_FROM_NAME', process.env.EMAIL_FROM_NAME);
 
             this.transporter = nodemailer.createTransport({
                 host: this.config.host,
@@ -98,7 +103,7 @@ class EmailService {
         if (!this.initialized) await this.init();
 
         const info = await this.transporter.sendMail({
-            from: `"VFD Workflow" <${this.config.user}>`,
+            from: `"${this.config.fromName}" <${this.config.user}>`,
             to,
             subject,
             html,
@@ -109,12 +114,13 @@ class EmailService {
 
     async sendRepairFinishedEmail(repair, clientEmail) {
         if (!this.initialized) await this.init();
+        const branding = await brandingService.getBranding();
 
         const mailOptions = {
-            from: `"VFD Workflow" <${this.config.user}>`,
+            from: `"${this.config.fromName}" <${this.config.user}>`,
             to: clientEmail,
             subject: `Variador | ${repair.client_name} | ${repair.internal_number || repair.id} | ${repair.brand} ${repair.model}`,
-            text: `Buenos días, envío el variador N°${repair.internal_number || repair.id} al que se le realizó una revisión completa.\n\nObservaciones:\n${repair.final_conclusion}\n\nRecomendaciones:\nVer informe adjunto.\n\nSaludos,\nDMD Compresores`,
+            text: `Buenos días, envío el variador N°${repair.internal_number || repair.id} al que se le realizó una revisión completa.\n\nObservaciones:\n${repair.final_conclusion}\n\nRecomendaciones:\nVer informe adjunto.\n\nSaludos,\n${branding.emailSignatureName}\n${branding.companyName}`,
         };
 
         return this.transporter.sendMail(mailOptions);

@@ -17,8 +17,8 @@ exports.getRepairs = async (req, res) => {
     `);
         res.json(result.rows);
     } catch (err) {
-        console.error('Get Repairs Error:', err.message);
-        res.status(500).json({ msg: 'Server error while fetching repairs', error: err.message });
+        console.error('Get Repairs Error:', err);
+        res.status(500).json({ msg: 'Server error while fetching repairs' });
     }
 };
 
@@ -54,8 +54,8 @@ exports.getRepairById = async (req, res) => {
             images: imagesResult.rows
         });
     } catch (err) {
-        console.error('Get Repair By Id Error:', err.message);
-        res.status(500).json({ msg: 'Server error while fetching repair details', error: err.message });
+        console.error('Get Repair By Id Error:', err);
+        res.status(500).json({ msg: 'Server error while fetching repair details' });
     }
 };
 
@@ -74,8 +74,8 @@ exports.createRepair = async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Create Repair Error:', err.message);
-        res.status(500).json({ msg: 'Server error while creating repair', error: err.message });
+        console.error('Create Repair Error:', err);
+        res.status(500).json({ msg: 'Server error while creating repair' });
     }
 };
 
@@ -93,8 +93,8 @@ exports.updateRepairStatus = async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Update Status Error:', err.message);
-        res.status(500).json({ msg: 'Server error while updating status', error: err.message });
+        console.error('Update Status Error:', err);
+        res.status(500).json({ msg: 'Server error while updating status' });
     }
 };
 
@@ -134,8 +134,8 @@ exports.updateRepairData = async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Update Repair Data Error:', err.message);
-        res.status(500).json({ msg: 'Server error while updating repair data', error: err.message });
+        console.error('Update Repair Data Error:', err);
+        res.status(500).json({ msg: 'Server error while updating repair data' });
     }
 };
 
@@ -160,8 +160,8 @@ exports.upsertComponentState = async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Upsert Component State Error:', err.message);
-        res.status(500).json({ msg: 'Server error while updating component state', error: err.message });
+        console.error('Upsert Component State Error:', err);
+        res.status(500).json({ msg: 'Server error while updating component state' });
     }
 };
 exports.updateRepairVisibility = async (req, res) => {
@@ -178,8 +178,8 @@ exports.updateRepairVisibility = async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Update Visibility Error:', err.message);
-        res.status(500).json({ msg: 'Server error while updating visibility', error: err.message });
+        console.error('Update Visibility Error:', err);
+        res.status(500).json({ msg: 'Server error while updating visibility' });
     }
 };
 exports.deleteRepair = async (req, res) => {
@@ -201,8 +201,8 @@ exports.deleteRepair = async (req, res) => {
         res.json({ msg: 'Repair removed' });
     } catch (err) {
         await db.query('ROLLBACK');
-        console.error('Delete Repair Error:', err.message);
-        res.status(500).json({ msg: 'Server error while deleting repair', error: err.message });
+        console.error('Delete Repair Error:', err);
+        res.status(500).json({ msg: 'Server error while deleting repair' });
     }
 };
 
@@ -247,7 +247,7 @@ exports.downloadPDF = async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=Informe_${repairData.internal_number || repairData.serial_number}.pdf`);
         res.send(pdfBuffer);
     } catch (err) {
-        console.error('Download PDF Error:', err.message);
-        res.status(500).json({ msg: 'Server error while generating PDF', error: err.message });
+        console.error('Download PDF Error:', err);
+        res.status(500).json({ msg: 'Server error while generating PDF' });
     }
 };

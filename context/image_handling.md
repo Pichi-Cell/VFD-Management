@@ -29,12 +29,14 @@ Defined in `backend/routes/images.js`:
 
 ### The Upload Process
 When a technician uploads a photo:
-1. **Multer Middleware**: Receives the file and stores it in a temporary local `uploads/` directory.
+1. **Multer Middleware**: Receives the file and stores it in a temporary local upload directory. `UPLOAD_DIR` is the canonical env key; `UPLOADS_DIR` is only a temporary backward-compatible fallback.
 2. **Controller (`uploadImage`)**:
    - Queries repair metadata to determine the correct SMB folder.
    - Calls `smbClient.uploadFile` to copy the file to the share.
    - Deletes the local temporary file.
    - Records the "Service Path" in the database (e.g., `/api/images/serve/12/photo.jpg`).
+
+Uploads are limited by `MAX_UPLOAD_SIZE_BYTES` and only accept `image/jpeg`, `image/png`, and `image/webp`.
 
 ### The Serving Process
 Images are protected and not served as static files:

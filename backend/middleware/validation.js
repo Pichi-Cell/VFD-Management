@@ -56,6 +56,13 @@ exports.registerValidation = [
     validate
 ];
 
+exports.userUpdateValidation = [
+    body('username').notEmpty().trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
+    body('role').notEmpty().isIn(['admin', 'technician']).withMessage('Role must be admin or technician'),
+    body('password').optional({ checkFalsy: true }).isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    validate
+];
+
 exports.loginValidation = [
     body('username').notEmpty(),
     body('password').notEmpty(),

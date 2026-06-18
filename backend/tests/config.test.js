@@ -52,9 +52,12 @@ describe('Config Controller', () => {
             .set('x-auth-token', token);
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual({
+        expect(res.body).toMatchObject({
             STORAGE_TYPE: 'LOCAL',
-            UPLOAD_DIR: '/test/uploads'
+            UPLOAD_DIR: '/test/uploads',
+            EMAIL_PASS: '',
+            SMB_PASS: '',
+            EMAIL_FROM_NAME: 'VFD Workflow'
         });
     });
 
@@ -74,13 +77,58 @@ describe('Config Controller', () => {
         expect(res.body.msg).toEqual('Configuration updated successfully');
 
         // Check that at least the BEGIN and COMMIT were called
-        expect(pool.query).toHaveBeenCalledWith('BEGIN');
-        expect(pool.query).toHaveBeenCalledWith('COMMIT');
+        expect(pool.query).toHaveBeenCalledWith('BEGIN', undefined);
+        expect(pool.query).toHaveBeenCalledWith('COMMIT', undefined);
 
         // Check that at least one of the keys was attempted to be inserted
         expect(pool.query).toHaveBeenCalledWith(
             expect.stringContaining('INSERT INTO vfd.settings'),
             expect.arrayContaining(['EMAIL_HOST', 'smtp.test.com'])
+        );
+    });
+
+    it('should reject unknown config keys', async () => {
+        const token = generateToken('admin');
+        pool.query.mockResolvedValue({ rows: [] });
+
+        const res = await request(app)
+            .post('/api/config')
+            .set('x-auth-token', token)
+            .send({ UNKNOWN_KEY: 'value' });
+
+        expect(res.statusCode).toEqual(400);
+        expect(res.body.errors).toContain('Unknown configuration key: UNKNOWN_KEY');
+    });
+
+    it('should reject invalid config values', async () => {
+        const token = generateToken('admin');
+        pool.query.mockResolvedValue({ rows: [] });
+
+        const res = await request(app)
+            .post('/api/config')
+            .set('x-auth-token', token)
+            .send({ STORAGE_TYPE: 'DROPBOX', EMAIL_PORT: 'abc' });
+
+        expect(res.statusCode).toEqual(400);
+        expect(res.body.errors).toEqual(expect.arrayContaining([
+            'STORAGE_TYPE must be one of: LOCAL, SMB',
+            'EMAIL_PORT must be an integer'
+        ]));
+    });
+
+    it('should preserve stored secrets when admin saves blank secret fields', async () => {
+        const token = generateToken('admin');
+        pool.query.mockResolvedValue({ rows: [{ key: 'EMAIL_PASS', value: 'stored-secret' }] });
+
+        const res = await request(app)
+            .post('/api/config')
+            .set('x-auth-token', token)
+            .send({ EMAIL_PASS: '' });
+
+        expect(res.statusCode).toEqual(200);
+        expect(pool.query).not.toHaveBeenCalledWith(
+            expect.stringContaining('INSERT INTO vfd.settings'),
+            expect.arrayContaining(['EMAIL_PASS', ''])
         );
     });
 });

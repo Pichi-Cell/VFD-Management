@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db');
 const smbClient = require('../utils/smbClient');
+const { applyDefaults, rowsToConfig } = require('../config/configSchema');
+const { resolveUploadDir } = require('../config/paths');
+const { assertSafeRelativePath } = require('../utils/pathSafety');
 
 /**
  * StorageService abstracts file operations.
@@ -11,7 +14,14 @@ class StorageService {
     constructor() {
         this.config = {
             type: process.env.STORAGE_TYPE || 'LOCAL',
-            localDir: process.env.UPLOAD_DIR || path.join(__dirname, '../uploads')
+            localDir: resolveUploadDir(),
+            smb: {
+                host: process.env.SMB_HOST || '',
+                share: process.env.SMB_SHARE || '',
+                user: process.env.SMB_USER || '',
+                pass: process.env.SMB_PASS || '',
+                basePath: process.env.SMB_BASE_PATH || ''
+            }
         };
         this.initialized = false;
     }
@@ -19,25 +29,31 @@ class StorageService {
     async init() {
         try {
             const result = await db.query('SELECT key, value FROM vfd.settings');
-            const settings = {};
-            result.rows.forEach(row => {
-                settings[row.key] = row.value;
-            });
+            const settings = rowsToConfig(result.rows);
+            const config = applyDefaults(settings);
 
             // Fallback Logic: DB -> .env -> Default
             const types = [settings.STORAGE_TYPE, process.env.STORAGE_TYPE, 'LOCAL'];
             this.config.type = types.find(t => t !== undefined && t !== null);
 
-            const dirs = [settings.UPLOAD_DIR, process.env.UPLOAD_DIR, path.join(__dirname, '../uploads')];
-            this.config.localDir = dirs.find(d => d !== undefined && d !== null);
+            const dirs = [settings.UPLOAD_DIR, process.env.UPLOAD_DIR, process.env.UPLOADS_DIR];
+            this.config.localDir = resolveUploadDir(dirs.find(d => d !== undefined && d !== null));
+            this.config.smb = {
+                host: settings.SMB_HOST ?? process.env.SMB_HOST ?? config.SMB_HOST,
+                share: settings.SMB_SHARE ?? process.env.SMB_SHARE ?? config.SMB_SHARE,
+                user: settings.SMB_USER ?? process.env.SMB_USER ?? config.SMB_USER,
+                pass: settings.SMB_PASS ?? process.env.SMB_PASS ?? config.SMB_PASS,
+                basePath: settings.SMB_BASE_PATH ?? process.env.SMB_BASE_PATH ?? config.SMB_BASE_PATH
+            };
 
             // Auto-Persistence: If from .env and not in DB, save it
-            if (!settings.STORAGE_TYPE && process.env.STORAGE_TYPE) {
-                await this.setType(process.env.STORAGE_TYPE);
-            }
-            if (!settings.UPLOAD_DIR && process.env.UPLOAD_DIR) {
-                await db.query('INSERT INTO vfd.settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2', ['UPLOAD_DIR', process.env.UPLOAD_DIR]);
-            }
+            await this.saveEnvSettingIfMissing(settings, 'STORAGE_TYPE', process.env.STORAGE_TYPE);
+            await this.saveEnvSettingIfMissing(settings, 'UPLOAD_DIR', process.env.UPLOAD_DIR || process.env.UPLOADS_DIR);
+            await this.saveEnvSettingIfMissing(settings, 'SMB_HOST', process.env.SMB_HOST);
+            await this.saveEnvSettingIfMissing(settings, 'SMB_SHARE', process.env.SMB_SHARE);
+            await this.saveEnvSettingIfMissing(settings, 'SMB_USER', process.env.SMB_USER);
+            await this.saveEnvSettingIfMissing(settings, 'SMB_PASS', process.env.SMB_PASS);
+            await this.saveEnvSettingIfMissing(settings, 'SMB_BASE_PATH', process.env.SMB_BASE_PATH);
 
             this.initialized = true;
             console.log(`[SYSTEM] Storage initialized | Type: ${this.config.type} | Path: ${this.config.localDir}`);
@@ -56,13 +72,13 @@ class StorageService {
         if (!this.initialized) await this.init();
 
         if (this.config.type === 'SMB') {
-            return await smbClient.uploadFile(localPath, filename, subFolder);
+            return await smbClient.uploadFile(localPath, filename, subFolder, this.config.smb);
         } else {
-            const targetDir = path.join(this.config.localDir, subFolder);
+            const targetDir = this.resolveLocalPath(subFolder);
             if (!fs.existsSync(targetDir)) {
                 fs.mkdirSync(targetDir, { recursive: true });
             }
-            const targetPath = path.join(targetDir, filename);
+            const targetPath = this.resolveLocalPath(subFolder, filename);
             fs.copyFileSync(localPath, targetPath);
             return targetPath;
         }
@@ -72,9 +88,9 @@ class StorageService {
         if (!this.initialized) await this.init();
 
         if (this.config.type === 'SMB') {
-            return await smbClient.getFileBuffer(filename, subFolder);
+            return await smbClient.getFileBuffer(filename, subFolder, this.config.smb);
         } else {
-            const filePath = path.join(this.config.localDir, subFolder, filename);
+            const filePath = this.resolveLocalPath(subFolder, filename);
             return fs.readFileSync(filePath);
         }
     }
@@ -83,9 +99,9 @@ class StorageService {
         if (!this.initialized) await this.init();
 
         if (this.config.type === 'SMB') {
-            await smbClient.deleteFile(filename, subFolder);
+            await smbClient.deleteFile(filename, subFolder, this.config.smb);
         } else {
-            const filePath = path.join(this.config.localDir, subFolder, filename);
+            const filePath = this.resolveLocalPath(subFolder, filename);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
             }
@@ -96,6 +112,28 @@ class StorageService {
         if (!['LOCAL', 'SMB'].includes(type)) throw new Error('Invalid storage type');
         await db.query('INSERT INTO vfd.settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2', ['STORAGE_TYPE', type]);
         this.config.type = type;
+    }
+
+    async saveEnvSettingIfMissing(settings, key, value) {
+        if (value !== undefined && value !== null && !settings[key]) {
+            await db.query(
+                'INSERT INTO vfd.settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+                [key, value.toString()]
+            );
+        }
+    }
+
+    resolveLocalPath(subFolder = '', filename = '') {
+        const localRoot = path.resolve(this.config.localDir);
+        const subParts = assertSafeRelativePath(subFolder, 'subfolder');
+        const fileParts = filename ? assertSafeRelativePath(filename, 'filename') : [];
+        const targetPath = path.resolve(localRoot, ...subParts, ...fileParts);
+
+        if (targetPath !== localRoot && !targetPath.startsWith(localRoot + path.sep)) {
+            throw new Error('Resolved file path is outside upload root');
+        }
+
+        return targetPath;
     }
 }
 
